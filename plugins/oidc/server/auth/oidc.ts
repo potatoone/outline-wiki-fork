@@ -5,6 +5,7 @@ import get from "lodash/get";
 import { Strategy } from "passport-oauth2";
 import { slugifyDomain } from "@shared/utils/domains";
 import accountProvisioner from "@server/commands/accountProvisioner";
+import env from "@server/env";
 import {
   OIDCMalformedUserInfoError,
   AuthenticationError,
@@ -18,10 +19,9 @@ import {
   getTeamFromContext,
   getClientFromContext,
 } from "@server/utils/passport";
-import config from "../../plugin.json";
-import env from "../env";
 
 const router = new Router();
+const providerName = "oidc";
 const scopes = env.OIDC_SCOPES.split(" ");
 
 Strategy.prototype.userProfile = async function (accessToken, done) {
@@ -55,14 +55,14 @@ if (
   env.OIDC_USERINFO_URI
 ) {
   passport.use(
-    config.id,
+    providerName,
     new Strategy(
       {
         authorizationURL: env.OIDC_AUTH_URI,
         tokenURL: env.OIDC_TOKEN_URI,
         clientID: env.OIDC_CLIENT_ID,
         clientSecret: env.OIDC_CLIENT_SECRET,
-        callbackURL: `${env.URL}/auth/${config.id}.callback`,
+        callbackURL: `${env.URL}/auth/${providerName}.callback`,
         passReqToCallback: true,
         scope: env.OIDC_SCOPES,
         // @ts-expect-error custom state store
@@ -119,6 +119,16 @@ if (
             );
           }
 
+          let groups: undefined | string[];
+          if (env.OIDC_GROUPS_CLAIM && profile[env.OIDC_GROUPS_CLAIM]) {
+            if (!Array.isArray(profile[env.OIDC_GROUPS_CLAIM])) {
+              throw AuthenticationError(
+                "The groups claim in the profile parameter that was returned must be an array."
+              );
+            }
+            groups = profile[env.OIDC_GROUPS_CLAIM] as unknown as string[];
+          }
+
           const result = await accountProvisioner({
             ip: ctx.ip,
             team: {
@@ -134,9 +144,10 @@ if (
               avatarUrl: profile.picture,
             },
             authenticationProvider: {
-              name: config.id,
+              name: providerName,
               providerId: domain,
             },
+            groups,
             authentication: {
               providerId,
               accessToken,
@@ -153,8 +164,11 @@ if (
     )
   );
 
-  router.get(config.id, passport.authenticate(config.id));
-  router.get(`${config.id}.callback`, passportMiddleware(config.id));
+  router.get(providerName, passport.authenticate(providerName));
+
+  router.get(`${providerName}.callback`, passportMiddleware(providerName));
 }
+
+export const name = env.OIDC_DISPLAY_NAME;
 
 export default router;
