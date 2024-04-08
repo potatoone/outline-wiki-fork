@@ -1,16 +1,35 @@
-version: "3"
+version: "3.1"
 services:
-  redis:
-    image: redis
+
+  outline_redis:
+    container_name: outline_redis
+    image: redis:7.2.4-alpine3.19
+    restart: always
     ports:
-      - "127.0.0.1:6379:6379"
-    user: "redis:redis"
-  postgres:
-    image: postgres
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  outline_postgres:  
+    container_name: outline_postgres  
+    image: postgres:16.2-alpine3.19
+    restart: always  
     ports:
-      - "127.0.0.1:5432:5432"
-    environment:
+      - "5432:5432"
+    environment:  
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: outline
-    user: "postgres:postgres"
+    healthcheck:  
+      test: ["CMD", "pg_isready -d outline -U user"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    volumes:  
+      - #./outline/postgres/db:/var/lib/postgresql/data  
+      - /etc/localtime:/etc/localtime:ro  
