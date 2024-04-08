@@ -76,7 +76,7 @@ class OIDCPluginEnvironment extends Environment {
    * if missing and the user's group memberships will be updated accordingly.
    */
   public OIDC_GROUPS_CLAIM = this.toOptionalString(
-    environment.env.OIDC_GROUPS_CLAIM
+    environment.OIDC_GROUPS_CLAIM
   );
 
   /**
