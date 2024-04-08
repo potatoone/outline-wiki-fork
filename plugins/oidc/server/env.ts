@@ -71,6 +71,15 @@ class OIDCPluginEnvironment extends Environment {
     environment.OIDC_USERNAME_CLAIM ?? "preferred_username";
 
   /**
+   * The OIDC profile field to use for groups claim. If set, this should
+   * contain an array of group names (as strings). The groups will be created
+   * if missing and the user's group memberships will be updated accordingly.
+   */
+  public OIDC_GROUPS_CLAIM = this.toOptionalString(
+    environment.env.OIDC_GROUPS_CLAIM
+  );
+
+  /**
    * A space separated list of OIDC scopes to request. Defaults to "openid
    * profile email".
    */
