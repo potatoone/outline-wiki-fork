@@ -94,6 +94,10 @@
       "value": "preferred_username",
       "required": false
     },
+    "OIDC_GROUPS_CLAIM": {
+      "description": "",
+      "required": false
+    },
     "OIDC_DISPLAY_NAME": {
       "description": "Display name for OIDC authentication",
       "value": "OpenID Connect",
