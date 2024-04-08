@@ -9,6 +9,7 @@ import { traceFunction } from "@server/logging/tracing";
 import { AuthenticationProvider, Collection, Team, User } from "@server/models";
 import teamProvisioner from "./teamProvisioner";
 import userProvisioner from "./userProvisioner";
+import userGroupsUpdater from "./userGroupsUpdater";
 
 type Props = {
   /** The IP address of the incoming request */
@@ -40,6 +41,8 @@ type Props = {
     /** The public url of an image representing the team */
     avatarUrl?: string | null;
   };
+  /** Groups the user belongs to */
+  groups?: string[];
   /** Details of the authentication provider being used */
   authenticationProvider: {
     /** The name of the authentication provider, eg "google" */
@@ -73,6 +76,7 @@ async function accountProvisioner({
   ip,
   user: userParams,
   team: teamParams,
+  groups: groupsParam,
   authenticationProvider: authenticationProviderParams,
   authentication: authenticationParams,
 }: Props): Promise<AccountProvisionerResult> {
@@ -178,6 +182,10 @@ async function accountProvisioner({
     }
   }
 
+  if (groupsParam) {
+    await userGroupsUpdater(user, groupsParam);
+  }
+  
   return {
     user,
     team,
