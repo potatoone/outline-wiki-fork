@@ -1,6 +1,6 @@
 # Instructions
 
-This outline branch project uses the PR submitted to the community version by github user @Shuttleu to merge with the latest development version. The difference from the community version is that it adds the function of group synchronization with the OIDC server and updates the Chinese translation of Crowdin's latest submission. Please note that outline cannot be used for commercial activities, only for individual or team use.
+This outline branch project uses the PR submitted to the community version by github user @Shuttleu to merge with the latest development version. The difference from the community version is that the function of synchronizing OIDC server user groups is added and the Chinese translation of Crowdin's latest submission is updated. Please note that outline cannot be used for commercial activities, only for individual or team use.
 
 The docker image has been uploaded to the personal public warehouse. Run the following command to obtain the installation application directly:
 ```shell
