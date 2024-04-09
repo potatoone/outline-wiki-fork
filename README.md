@@ -1,6 +1,6 @@
 # Instructions
 
-This outline branch project uses the PR submitted to the community version by github user @Shuttleu to merge with the latest development version. The difference from the community version is that the function of synchronizing OIDC server user groups is added and the Chinese translation of Crowdin's latest submission is updated. Please note that outline cannot be used for commercial activities, only for individual or team use.
+This outline branch project uses the PR submitted to the community version by github user @Shuttleu to merge with the latest development version. The difference from the community version is that the function of synchronizing OIDC server user groups is added and the Chinese translation of Crowdin's latest submission is updated. Please note that the Community version and the branch outline cannot be used for commercial activities, are prohibited from being sold to any third party, and can only be used for learning exchanges within individuals and teams.
 
 [branch] is a branch with functional changes, and [Sync-Outline] is a backup that is synchronized with the community Edition.
 Use git clone to get the source code:
