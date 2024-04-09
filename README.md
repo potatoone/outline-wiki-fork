@@ -1,3 +1,12 @@
+# Instructions
+
+This outline branch project uses the PR submitted to the community outline by github user @Shuttleu, and is built with the latest development version. The difference is that the community version adds the function of group synchronization with the OIDC server, and updates the Chinese translation submitted by Crowdin. Please note that outline cannot be used for commercial activities, only for individual or team use
+
+The docker image has been uploaded to the personal public warehouse. Run the following command to obtain the installation application directly:
+Docker pull onepotato/outline: 0.75.2.1
+docker pull onepotato/outline_base:0.75.2.1
+
+
 <p align="center">
   <img src="https://user-images.githubusercontent.com/31465/34380645-bd67f474-eb0b-11e7-8d03-0151c1730654.png" height="29" />
 </p>
