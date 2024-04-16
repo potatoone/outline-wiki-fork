@@ -159,7 +159,7 @@
     resolve "^1.14.2"
     semver "^6.1.2"
 
-"@babel/helper-environment-visitor@^7.18.9", "@babel/helper-environment-visitor@^7.22.20", "@babel/helper-environment-visitor@^7.22.5":
+"@babel/helper-environment-visitor@^7.18.9", "@babel/helper-environment-visitor@^7.22.20":
   version "7.22.20"
   resolved "https://registry.yarnpkg.com/@babel/helper-environment-visitor/-/helper-environment-visitor-7.22.20.tgz#96159db61d34a29dba454c959f5ae4a649ba9167"
   integrity "sha1-lhWdth00op26RUyVn1rkpkm6kWc= sha512-zfedSIzFhat/gFhWfHtgWvlec0nqB9YEIVrpuwjruLlXfUSnA8cJB0miHKwqDnQ7d32aKo2xt88/xZptwxbfhA=="
@@ -171,7 +171,7 @@
   dependencies:
     "@babel/types" "^7.18.6"
 
-"@babel/helper-function-name@^7.18.9", "@babel/helper-function-name@^7.19.0", "@babel/helper-function-name@^7.22.5", "@babel/helper-function-name@^7.23.0":
+"@babel/helper-function-name@^7.18.9", "@babel/helper-function-name@^7.19.0", "@babel/helper-function-name@^7.23.0":
   version "7.23.0"
   resolved "https://registry.yarnpkg.com/@babel/helper-function-name/-/helper-function-name-7.23.0.tgz#1f9a3cdbd5b2698a670c30d2735f9af95ed52759"
   integrity "sha1-H5o829WyaYpnDDDSc1+a+V7VJ1k= sha512-OErEqsrxjZTJciZ4Oo+eoZqeW9UIiOcuYKRJA4ZAgV9myA+pOXhhmpfNCKjEH/auVfEYVFJ6y1Tc4r0eIApqiw=="
@@ -186,7 +186,7 @@
   dependencies:
     "@babel/types" "^7.22.5"
 
-"@babel/helper-member-expression-to-functions@^7.22.15", "@babel/helper-member-expression-to-functions@^7.23.0":
+"@babel/helper-member-expression-to-functions@^7.23.0":
   version "7.23.0"
   resolved "https://registry.yarnpkg.com/@babel/helper-member-expression-to-functions/-/helper-member-expression-to-functions-7.23.0.tgz#9263e88cc5e41d39ec18c9a3e0eced59a3e7d366"
   integrity "sha1-kmPojMXkHTnsGMmj4OztWaPn02Y= sha512-6gfrPwh7OuT6gZyJZvd6WbTfrqAo7vm4xCzAXOusKqq/vWdKXphTpj5klHKNmRUU6/QRGlBsyU9mAIPaWHlqJA=="
@@ -233,7 +233,7 @@
     "@babel/helper-wrap-function" "^7.18.9"
     "@babel/types" "^7.18.9"
 
-"@babel/helper-replace-supers@^7.18.6", "@babel/helper-replace-supers@^7.20.7", "@babel/helper-replace-supers@^7.22.20", "@babel/helper-replace-supers@^7.22.9", "@babel/helper-replace-supers@^7.24.1":
+"@babel/helper-replace-supers@^7.18.6", "@babel/helper-replace-supers@^7.20.7", "@babel/helper-replace-supers@^7.22.20", "@babel/helper-replace-supers@^7.24.1":
   version "7.24.1"
   resolved "https://registry.yarnpkg.com/@babel/helper-replace-supers/-/helper-replace-supers-7.24.1.tgz#7085bd19d4a0b7ed8f405c1ed73ccb70f323abc1"
   integrity sha512-QCR1UqC9BzG5vZl8BMicmZ28RuUBnHhAMddD8yHFHDRH9lLTZ9uUPehX8ctVPT8l0TKblJidqcgUUKGVrePleQ==
@@ -1665,7 +1665,7 @@
   dependencies:
     lib0 "^0.2.42"
 
-"@hocuspocus/common@^1.1.2":
+"@hocuspocus/common@^1.1.2", "@hocuspocus/common@^1.1.3":
   version "1.1.3"
   resolved "https://registry.yarnpkg.com/@hocuspocus/common/-/common-1.1.3.tgz#d2b5187092497308d3df659f8a036bded20fd759"
   integrity "sha1-0rUYcJJJcwjT32WfigNr3tIP11k= sha512-U5wQcMsVTooUKSqAq8m2bmMPWaVp78oTl1YFcJ2v3Dq0Wt1MBik3AohcnuUZ2JcP1fblf8lZVugCs9qg9mbu6g=="
@@ -1688,12 +1688,12 @@
     "@lifeomic/attempt" "^3.0.2"
     lib0 "^0.2.46"
 
-"@hocuspocus/server@1.1.2", "@hocuspocus/server@^1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-1.1.2.tgz#c2ceab9938d4ff679ba22446e70fa3ce71fd6600"
-  integrity "sha1-ws6rmTjU/2eboiRG5w+jznH9ZgA= sha512-L6YHENRSyXDbYyFGt3S1etJq62XZEj6Z9QUmhqzOjlxQYHC/eaGtrCbAxi5dLKXORl3AY4CVtTfFN+3asmmT6w=="
+"@hocuspocus/server@1.1.3", "@hocuspocus/server@^1.1.2":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@hocuspocus/server/-/server-1.1.3.tgz#53518845e4249718d2fda9a3825563cfc673a54a"
+  integrity sha512-ShHZJsX8I6p4HBYePJZ8OEQS6ZDx0S7GhRBmCQA5nN1xDUYR7w9jl4EprPiYbp0OHLVjGQLbZGMNRUJoTRo5Tg==
   dependencies:
-    "@hocuspocus/common" "^1.1.2"
+    "@hocuspocus/common" "^1.1.3"
     "@types/async-lock" "^1.1.3"
     "@types/uuid" "^9.0.0"
     "@types/ws" "^8.5.3"
