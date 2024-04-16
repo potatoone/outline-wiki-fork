@@ -748,7 +748,7 @@
   "Login to {{ authProviderName }}": "登录到 {{ authProviderName }}",
   "You signed in with {{ authProviderName }} last time.": "你上次登录的方式为 {{ authProviderName }}。",
   "Or": "或",
-  "Already have an account? Go to <1>login</1>.": "已经有帐户了？前往 <1>登录</1>。",
+  "Already have an account? Go to <1>login</1>.": "已经有帐户了？前往<1>登录</1>。",
   "Any collection": "文档集",
   "Any time": "任何时间",
   "Past day": "过去一天",
