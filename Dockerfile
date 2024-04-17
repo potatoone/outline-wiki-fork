@@ -1,5 +1,5 @@
 ARG APP_PATH=/opt/outline
-FROM onepotato/outline_base:0.75.2.3 as base
+FROM onepotato/outline_base:0.76.0-0 as base
 
 ARG APP_PATH
 WORKDIR $APP_PATH
