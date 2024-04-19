@@ -2,13 +2,13 @@
 
 This outline branch project uses the PR submitted to the community version by github user @Shuttleu to merge with the latest development version. The difference from the community version is that the function of synchronizing OIDC server user groups is added and the Chinese translation of Crowdin's latest submission is updated. Please note that the Community version and the branch outline cannot be used for commercial activities, are prohibited from being sold to any third party, and can only be used for learning exchanges within individuals and teams.
 
-[branch] is a branch with functional changes, and [Sync_Outline] is a backup that is synchronized with the community Edition.
+**branch** is a branch with functional changes, and **sync_outline** is a backup that is synchronized with the community Edition.
 Use git clone to get the source code:
 ```shell
-# Branch
-git clone https://github.com/potatoone/outline-wiki-fork.git -b Branch
-# Sync-Outline
-git clone https://github.com/potatoone/outline-wiki-fork.git -b Sync_Outline
+# branch
+git clone https://github.com/potatoone/outline-wiki-fork.git -b branch
+# sync-outline
+git clone https://github.com/potatoone/outline-wiki-fork.git -b sync_outline
 ```
 
 The docker image has been uploaded to the docker public repository. Run the following command to obtain the application:
