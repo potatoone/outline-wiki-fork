@@ -84,7 +84,7 @@ router.get(
           "application/octet-stream"
       );
       ctx.attachment(fileName);
-      ctx.body = FileStorage.getFileStream(key);
+      ctx.body = await FileStorage.getFileStream(key);
     } else {
       const attachment = await Attachment.findOne({
         where: { key },
@@ -94,7 +94,9 @@ router.get(
 
       ctx.set("Cache-Control", cacheHeader);
       ctx.set("Content-Type", attachment.contentType);
-      ctx.attachment(attachment.name);
+      ctx.attachment(attachment.name, {
+        type: FileStorage.getContentDisposition(attachment.contentType),
+      });
       ctx.body = attachment.stream;
     }
   }
