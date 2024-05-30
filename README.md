@@ -14,9 +14,9 @@ git clone https://github.com/potatoone/outline-wiki-fork.git -b sync_outline
 The docker image has been uploaded to the docker public repository. Run the following command to obtain the application:
 ```shell
 # images
-docker pull onepotato/outline:0.76.2.0
+docker pull onepotato/outline:0.76.2-0
 # base images
-docker pull onepotato/outline_base:0.76.2.0
+docker pull onepotato/outline_base:0.76.2-0
 ```
 
 <br>
