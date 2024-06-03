@@ -100,10 +100,10 @@ export default function SelectionToolbar(props: Props) {
   const { view, commands } = useEditor();
   const dictionary = useDictionary();
   const menuRef = React.useRef<HTMLDivElement | null>(null);
-  const isActive = useIsActive(view.state);
+  const isMobile = useMobile();
+  const isActive = useIsActive(view.state) || isMobile;
   const isDragging = useIsDragging();
   const previousIsActive = usePrevious(isActive);
-  const isMobile = useMobile();
 
   React.useEffect(() => {
     // Trigger callbacks when the toolbar is opened or closed
@@ -230,7 +230,7 @@ export default function SelectionToolbar(props: Props) {
   if (isCodeSelection && selection.empty) {
     items = getCodeMenuItems(state, readOnly, dictionary);
   } else if (isTableSelection) {
-    items = getTableMenuItems(dictionary);
+    items = getTableMenuItems(state, dictionary);
   } else if (colIndex !== undefined) {
     items = getTableColMenuItems(state, colIndex, rtl, dictionary);
   } else if (rowIndex !== undefined) {
