@@ -53,16 +53,16 @@ function CollectionMemberList({ collection, invitedInSession }: Props) {
     () =>
       [
         {
-          label: t("Admin"),
-          value: CollectionPermission.Admin,
+          label: t("View only"),
+          value: CollectionPermission.Read,
         },
         {
           label: t("Can edit"),
           value: CollectionPermission.ReadWrite,
         },
         {
-          label: t("View only"),
-          value: CollectionPermission.Read,
+          label: t("Manage"),
+          value: CollectionPermission.Admin,
         },
         {
           divider: true,
@@ -99,17 +99,19 @@ function CollectionMemberList({ collection, invitedInSession }: Props) {
                 <InputMemberPermissionSelect
                   style={{ margin: 0 }}
                   permissions={permissions}
-                  onChange={async (permission: CollectionPermission) => {
-                    if (permission) {
+                  onChange={async (
+                    permission: CollectionPermission | typeof EmptySelectValue
+                  ) => {
+                    if (permission === EmptySelectValue) {
+                      await collectionGroupMemberships.delete({
+                        collectionId: collection.id,
+                        groupId: membership.groupId,
+                      });
+                    } else {
                       await collectionGroupMemberships.create({
                         collectionId: collection.id,
                         groupId: membership.groupId,
                         permission,
-                      });
-                    } else {
-                      await collectionGroupMemberships.delete({
-                        collectionId: collection.id,
-                        groupId: membership.groupId,
                       });
                     }
                   }}
