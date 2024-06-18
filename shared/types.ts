@@ -182,7 +182,13 @@ export type PublicTeam = {
   avatarUrl: string;
   name: string;
   customTheme: Partial<CustomTheme>;
+  tocPosition: TOCPosition;
 };
+
+export enum TOCPosition {
+  Left = "left",
+  Right = "right",
+}
 
 export enum TeamPreference {
   /** Whether documents have a separate edit mode instead of always editing. */
@@ -199,6 +205,8 @@ export enum TeamPreference {
   Commenting = "commenting",
   /** The custom theme for the team. */
   CustomTheme = "customTheme",
+  /** Side to display the document's table of contents in relation to the main content. */
+  TocPosition = "tocPosition",
 }
 
 export type TeamPreferences = {
@@ -209,6 +217,7 @@ export type TeamPreferences = {
   [TeamPreference.MembersCanCreateApiKey]?: boolean;
   [TeamPreference.Commenting]?: boolean;
   [TeamPreference.CustomTheme]?: Partial<CustomTheme>;
+  [TeamPreference.TocPosition]?: TOCPosition;
 };
 
 export enum NavigationNodeType {
