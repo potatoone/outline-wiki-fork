@@ -97,7 +97,10 @@ router.post(
     };
 
     if (template) {
-      where = { ...where, template: true };
+      where = {
+        ...where,
+        template: true,
+      };
     }
 
     // if a specific user is passed then add to filters. If the user doesn't
@@ -941,6 +944,8 @@ router.post(
         createdById: user.id,
         template: true,
         emoji: original.emoji,
+        icon: original.icon,
+        color: original.color,
         title: original.title,
         text: original.text,
         content: original.content,
@@ -993,7 +998,7 @@ router.post(
     const { user } = ctx.state.auth;
     let collection: Collection | null | undefined;
 
-    const document = await Document.findByPk(id, {
+    let document = await Document.findByPk(id, {
       userId: user.id,
       includeState: true,
       transaction,
@@ -1034,10 +1039,11 @@ router.post(
       }
     }
 
-    await documentUpdater({
+    document = await documentUpdater({
       document,
       user,
       ...input,
+      icon: input.icon ?? input.emoji ?? null,
       publish,
       collectionId,
       insightsEnabled,
@@ -1379,6 +1385,8 @@ router.post(
       title,
       text,
       emoji,
+      icon,
+      color,
       publish,
       collectionId,
       parentDocumentId,
@@ -1442,7 +1450,8 @@ router.post(
     const document = await documentCreator({
       title,
       text,
-      emoji,
+      icon: icon ?? emoji,
+      color,
       createdAt,
       publish,
       collectionId: collection?.id,
