@@ -161,6 +161,7 @@ if (
 
   router.get(config.id, passport.authenticate(config.id));
   router.get(`${config.id}.callback`, passportMiddleware(config.id));
+  router.post(`${config.id}.callback`, passportMiddleware(config.id));
 }
 
 export default router;
