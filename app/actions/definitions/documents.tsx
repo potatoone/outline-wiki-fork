@@ -104,9 +104,9 @@ export const createDocument = createAction({
       !!currentTeamId && stores.policies.abilities(currentTeamId).createDocument
     );
   },
-  perform: ({ activeCollectionId, inStarredSection }) =>
+  perform: ({ activeCollectionId, sidebarContext }) =>
     history.push(newDocumentPath(activeCollectionId), {
-      starred: inStarredSection,
+      sidebarContext,
     }),
 });
 
@@ -121,11 +121,11 @@ export const createDocumentFromTemplate = createAction({
     !!activeDocumentId &&
     !!stores.documents.get(activeDocumentId)?.template &&
     stores.policies.abilities(currentTeamId).createDocument,
-  perform: ({ activeCollectionId, activeDocumentId, inStarredSection }) =>
+  perform: ({ activeCollectionId, activeDocumentId, sidebarContext }) =>
     history.push(
       newDocumentPath(activeCollectionId, { templateId: activeDocumentId }),
       {
-        starred: inStarredSection,
+        sidebarContext,
       }
     ),
 });
@@ -141,9 +141,9 @@ export const createNestedDocument = createAction({
     !!activeDocumentId &&
     stores.policies.abilities(currentTeamId).createDocument &&
     stores.policies.abilities(activeDocumentId).createChildDocument,
-  perform: ({ activeDocumentId, inStarredSection }) =>
+  perform: ({ activeDocumentId, sidebarContext }) =>
     history.push(newNestedDocumentPath(activeDocumentId), {
-      starred: inStarredSection,
+      sidebarContext,
     }),
 });
 
@@ -658,15 +658,21 @@ export const importDocument = createAction({
       const files = getEventFiles(ev);
 
       const file = files[0];
-      const document = await documents.import(
-        file,
-        activeDocumentId,
-        activeCollectionId,
-        {
-          publish: true,
-        }
-      );
-      history.push(document.url);
+
+      try {
+        const document = await documents.import(
+          file,
+          activeDocumentId,
+          activeCollectionId,
+          {
+            publish: true,
+          }
+        );
+        history.push(document.url);
+      } catch (err) {
+        toast.error(err.message);
+        throw err;
+      }
     };
 
     input.click();
@@ -714,11 +720,11 @@ export const openRandomDocument = createAction({
     const documentPaths = stores.collections.pathsToDocuments.filter(
       (path) => path.type === "document" && path.id !== activeDocumentId
     );
-    const documentPath =
+    const randomPath =
       documentPaths[Math.round(Math.random() * documentPaths.length)];
 
-    if (documentPath) {
-      history.push(documentPath.url);
+    if (randomPath) {
+      history.push(randomPath.url);
     }
   },
 });
