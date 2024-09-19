@@ -53,8 +53,7 @@ type Props = RouteComponentProps<Params, StaticContext, LocationState> & {
 };
 
 function DataLoader({ match, children }: Props) {
-  const { ui, views, shares, comments, documents, revisions, subscriptions } =
-    useStores();
+  const { ui, views, shares, comments, documents, revisions } = useStores();
   const team = useCurrentTeam();
   const user = useCurrentUser();
   const [error, setError] = React.useState<Error | null>(null);
@@ -122,22 +121,6 @@ function DataLoader({ match, children }: Props) {
   }, [document, revisionId, revisions]);
 
   React.useEffect(() => {
-    async function fetchSubscription() {
-      if (document?.id && !document?.isDeleted && !revisionId) {
-        try {
-          await subscriptions.fetchPage({
-            documentId: document.id,
-            event: "documents.update",
-          });
-        } catch (err) {
-          Logger.error("Failed to fetch subscriptions", err);
-        }
-      }
-    }
-    void fetchSubscription();
-  }, [document?.id, document?.isDeleted, subscriptions, revisionId]);
-
-  React.useEffect(() => {
     async function fetchViews() {
       if (document?.id && !document?.isDeleted && !revisionId) {
         try {
@@ -158,12 +141,17 @@ function DataLoader({ match, children }: Props) {
         throw new Error("Document not loaded yet");
       }
 
-      const newDocument = await documents.create({
-        collectionId: nested ? undefined : document.collectionId,
-        parentDocumentId: nested ? document.id : document.parentDocumentId,
-        title,
-        data: ProsemirrorHelper.getEmptyDocument(),
-      });
+      const newDocument = await documents.create(
+        {
+          collectionId: nested ? undefined : document.collectionId,
+          parentDocumentId: nested ? document.id : document.parentDocumentId,
+          title,
+          data: ProsemirrorHelper.getEmptyDocument(),
+        },
+        {
+          publish: document.isDraft ? undefined : true,
+        }
+      );
 
       return newDocument.url;
     },
