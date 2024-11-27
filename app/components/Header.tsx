@@ -16,6 +16,8 @@ import useStores from "~/hooks/useStores";
 import { draggableOnDesktop, fadeOnDesktopBackgrounded } from "~/styles";
 import Desktop from "~/utils/Desktop";
 
+export const HEADER_HEIGHT = 64;
+
 type Props = {
   left?: React.ReactNode;
   title: React.ReactNode;
@@ -128,9 +130,8 @@ const Wrapper = styled(Flex)<WrapperProps>`
       `};
 
   padding: 12px;
-  transition: all 100ms ease-out;
   transform: translate3d(0, 0, 0);
-  min-height: 64px;
+  min-height: ${HEADER_HEIGHT}px;
   justify-content: flex-start;
   ${draggableOnDesktop()}
 
