@@ -106,7 +106,7 @@ async function accountProvisioner({
     if (err.id === "invalid_authentication") {
       const authenticationProvider = await AuthenticationProvider.findOne({
         where: {
-          name: authenticationProviderParams.name, // example: "google"
+          name: authenticationProviderParams.name,
           teamId: teamParams.teamId,
         },
         include: [
@@ -116,6 +116,7 @@ async function accountProvisioner({
             required: true,
           },
         ],
+        order: [["enabled", "DESC"]],
       });
 
       if (authenticationProvider) {

@@ -56,6 +56,8 @@ export enum FileOperationState {
 
 export enum MentionType {
   User = "user",
+  Document = "document",
+  Collection = "collection",
 }
 
 export type PublicEnv = {
@@ -269,6 +271,10 @@ export type CollectionSort = {
   direction: "asc" | "desc";
 };
 
+export enum SubscriptionType {
+  Document = "documents.update",
+}
+
 export enum NotificationEventType {
   PublishDocument = "documents.publish",
   UpdateDocument = "documents.update",
@@ -277,6 +283,7 @@ export enum NotificationEventType {
   CreateRevision = "revisions.create",
   CreateCollection = "collections.create",
   CreateComment = "comments.create",
+  ResolveComment = "comments.resolve",
   MentionedInDocument = "documents.mentioned",
   MentionedInComment = "comments.mentioned",
   InviteAccepted = "emails.invite_accepted",
@@ -305,6 +312,7 @@ export const NotificationEventDefaults: Record<NotificationEventType, boolean> =
     [NotificationEventType.UpdateDocument]: true,
     [NotificationEventType.CreateCollection]: false,
     [NotificationEventType.CreateComment]: true,
+    [NotificationEventType.ResolveComment]: true,
     [NotificationEventType.CreateRevision]: false,
     [NotificationEventType.MentionedInDocument]: true,
     [NotificationEventType.MentionedInComment]: true,

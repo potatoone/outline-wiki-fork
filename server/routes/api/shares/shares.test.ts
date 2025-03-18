@@ -1,4 +1,5 @@
 import { CollectionPermission } from "@shared/types";
+import { createContext } from "@server/context";
 import { UserMembership, Share } from "@server/models";
 import {
   buildUser,
@@ -56,6 +57,58 @@ describe("#shares.list", () => {
     expect(body.data[0].documentTitle).toBe(document.title);
   });
 
+  it("should allow filtering by document title", async () => {
+    const user = await buildUser();
+    const document = await buildDocument({
+      userId: user.id,
+      teamId: user.teamId,
+      title: "hardcoded",
+    });
+    await buildShare({
+      documentId: document.id,
+      teamId: user.teamId,
+      userId: user.id,
+    });
+    const res = await server.post("/api/shares.list", {
+      body: {
+        token: user.getJwtToken(),
+        query: "test",
+      },
+    });
+    const body = await res.json();
+    expect(res.status).toEqual(200);
+    expect(body.data.length).toEqual(0);
+  });
+
+  it("should allow filtering by document title and return matching shares", async () => {
+    const user = await buildUser();
+    await buildDocument({
+      userId: user.id,
+      teamId: user.teamId,
+    });
+    const document = await buildDocument({
+      userId: user.id,
+      teamId: user.teamId,
+      title: "test",
+    });
+    const share = await buildShare({
+      documentId: document.id,
+      teamId: user.teamId,
+      userId: user.id,
+    });
+    const res = await server.post("/api/shares.list", {
+      body: {
+        token: user.getJwtToken(),
+        query: "test",
+      },
+    });
+    const body = await res.json();
+    expect(res.status).toEqual(200);
+    expect(body.data.length).toEqual(1);
+    expect(body.data[0].id).toEqual(share.id);
+    expect(body.data[0].documentTitle).toBe("test");
+  });
+
   it("should not return revoked shares", async () => {
     const user = await buildUser();
     const document = await buildDocument({
@@ -67,7 +120,7 @@ describe("#shares.list", () => {
       teamId: user.teamId,
       userId: user.id,
     });
-    await share.revoke(user.id);
+    await share.revoke(createContext({ user }));
     const res = await server.post("/api/shares.list", {
       body: {
         token: user.getJwtToken(),
@@ -340,7 +393,7 @@ describe("#shares.create", () => {
       teamId: user.teamId,
       userId: user.id,
     });
-    await share.revoke(user.id);
+    await share.revoke(createContext({ user }));
     const res = await server.post("/api/shares.create", {
       body: {
         token: user.getJwtToken(),

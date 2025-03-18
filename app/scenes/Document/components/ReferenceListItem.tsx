@@ -3,13 +3,13 @@ import { DocumentIcon } from "outline-icons";
 import * as React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { s, ellipsis } from "@shared/styles";
+import Icon from "@shared/components/Icon";
+import { s, hover, ellipsis } from "@shared/styles";
 import { IconType, NavigationNode } from "@shared/types";
 import { determineIconType } from "@shared/utils/icon";
 import Document from "~/models/Document";
 import Flex from "~/components/Flex";
-import Icon from "~/components/Icon";
-import { hover } from "~/styles";
+import { SidebarContextType } from "~/components/Sidebar/components/SidebarContext";
 import { sharedDocumentPath } from "~/utils/routeHelpers";
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
   document: Document | NavigationNode;
   anchor?: string;
   showCollection?: boolean;
+  sidebarContext?: SidebarContextType;
 };
 
 const DocumentLink = styled(Link)`
@@ -57,6 +58,7 @@ function ReferenceListItem({
   showCollection,
   anchor,
   shareId,
+  sidebarContext,
   ...rest
 }: Props) {
   const { icon, color } = document;
@@ -73,6 +75,7 @@ function ReferenceListItem({
         hash: anchor ? `d-${anchor}` : undefined,
         state: {
           title: document.title,
+          sidebarContext,
         },
       }}
       {...rest}

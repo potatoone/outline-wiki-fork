@@ -1,6 +1,5 @@
 import { InferCreationAttributes } from "sequelize";
 import { UserRole } from "@shared/types";
-import { parseEmail } from "@shared/utils/email";
 import InviteAcceptedEmail from "@server/emails/templates/InviteAcceptedEmail";
 import {
   DomainNotAllowedError,
@@ -64,7 +63,7 @@ export default async function userProvisioner({
   const auth = authentication
     ? await UserAuthentication.findOne({
         where: {
-          providerId: "" + authentication.providerId,
+          providerId: String(authentication.providerId),
         },
         include: [
           {
@@ -227,8 +226,7 @@ export default async function userProvisioner({
 
     // If the team settings do not allow this domain,
     // throw an error and fail user creation.
-    const { domain } = parseEmail(email);
-    if (team && !(await team.isDomainAllowed(domain))) {
+    if (team && !(await team.isDomainAllowed(email))) {
       throw DomainNotAllowedError();
     }
 

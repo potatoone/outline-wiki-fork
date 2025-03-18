@@ -21,30 +21,43 @@ export function createDatabaseInstance(
       InferCreationAttributes<Model>
     >;
   }
-) {
-  return new Sequelize(databaseUrl, {
-    logging: (msg) =>
-      process.env.DEBUG?.includes("database") && Logger.debug("database", msg),
-    typeValidation: true,
-    logQueryParameters: env.isDevelopment,
-    dialectOptions: {
-      ssl:
-        env.isProduction && !isSSLDisabled
-          ? {
-              // Ref.: https://github.com/brianc/node-postgres/issues/2009
-              rejectUnauthorized: false,
-            }
-          : false,
-    },
-    models: Object.values(input),
-    pool: {
-      max: poolMax,
-      min: poolMin,
-      acquire: 30000,
-      idle: 10000,
-    },
-    schema,
-  });
+): Sequelize {
+  try {
+    return new Sequelize(databaseUrl, {
+      logging: (msg) =>
+        process.env.DEBUG?.includes("database") &&
+        Logger.debug("database", msg),
+      typeValidation: true,
+      logQueryParameters: env.isDevelopment,
+      dialectOptions: {
+        ssl:
+          env.isProduction && !isSSLDisabled
+            ? {
+                // Ref.: https://github.com/brianc/node-postgres/issues/2009
+                rejectUnauthorized: false,
+              }
+            : false,
+      },
+      models: Object.values(input),
+      pool: {
+        max: poolMax,
+        min: poolMin,
+        acquire: 30000,
+        idle: 10000,
+      },
+      schema,
+    });
+  } catch (error) {
+    Logger.fatal(
+      "Could not connect to database",
+      databaseUrl
+        ? new Error(
+            `Failed to parse: "${databaseUrl}". Ensure special characters in database URL are encoded`
+          )
+        : new Error(`DATABASE_URL is not set.`)
+    );
+    process.exit(1);
+  }
 }
 
 /**

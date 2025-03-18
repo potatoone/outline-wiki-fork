@@ -2,7 +2,7 @@ import { observer } from "mobx-react";
 import * as React from "react";
 import { Switch, Redirect, RouteComponentProps } from "react-router-dom";
 import DocumentNew from "~/scenes/DocumentNew";
-import Error404 from "~/scenes/Error404";
+import Error404 from "~/scenes/Errors/Error404";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import CenteredContent from "~/components/CenteredContent";
 import PlaceholderDocument from "~/components/PlaceholderDocument";
@@ -72,8 +72,7 @@ function AuthenticatedRoutes() {
             <Redirect exact from="/templates" to={settingsPath("templates")} />
             <Redirect exact from="/collections/*" to="/collection/*" />
             <Route exact path="/collection/:id/new" component={DocumentNew} />
-            <Route exact path="/collection/:id/:tab" component={Collection} />
-            <Route exact path="/collection/:id" component={Collection} />
+            <Route exact path="/collection/:id/:tab?" component={Collection} />
             <Route exact path="/doc/new" component={DocumentNew} />
             <Route exact path={`/d/${slug}`} component={RedirectDocument} />
             <Route
@@ -84,7 +83,7 @@ function AuthenticatedRoutes() {
             <Route exact path={`/doc/${slug}/insights`} component={Document} />
             <Route exact path={`/doc/${slug}/edit`} component={Document} />
             <Route path={`/doc/${slug}`} component={Document} />
-            <Route exact path={`${searchPath()}/:term?`} component={Search} />
+            <Route exact path={`${searchPath()}/:query?`} component={Search} />
             <Route path="/404" component={Error404} />
             <SettingsRoutes />
             <Route component={Error404} />

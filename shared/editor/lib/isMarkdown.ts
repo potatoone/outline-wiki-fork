@@ -10,8 +10,8 @@ export default function isMarkdown(text: string): boolean {
   }
 
   // latex-ish
-  const latex = text.match(/\$\$/gm);
-  if (latex && latex.length > 1) {
+  const latex = text.match(/\$(.+)\$/g);
+  if (latex && latex.length > 0) {
     signals += latex.length;
   }
 
@@ -33,7 +33,7 @@ export default function isMarkdown(text: string): boolean {
   }
 
   // list-ish
-  const listItems = text.match(/^([-*]|\d+.)\s\S+/gm);
+  const listItems = text.match(/^[-*]\s\S+/gm);
   if (listItems) {
     signals += listItems.length;
   }

@@ -31,7 +31,7 @@ type InputProps = EmailProps & {
 
 type BeforeSend = {
   document: Document;
-  collection: Collection;
+  collection: Collection | null;
   unsubscribeUrl: string;
   body: string | undefined;
 };
@@ -63,9 +63,6 @@ export default class DocumentPublishedOrUpdatedEmail extends BaseEmail<
       document.$get("collection"),
       document.$get("team"),
     ]);
-    if (!collection) {
-      return false;
-    }
 
     let body;
     if (revisionId && team?.getPreference(TeamPreference.PreviewsInEmails)) {
@@ -117,7 +114,7 @@ export default class DocumentPublishedOrUpdatedEmail extends BaseEmail<
   }
 
   protected subject({ document, eventType }: Props) {
-    return `“${document.title}” ${this.eventName(eventType)}`;
+    return `“${document.titleWithDefault}” ${this.eventName(eventType)}`;
   }
 
   protected preview({ actorName, eventType }: Props): string {
@@ -147,9 +144,11 @@ export default class DocumentPublishedOrUpdatedEmail extends BaseEmail<
     const eventName = this.eventName(eventType);
 
     return `
-"${document.title}" ${eventName}
+"${document.titleWithDefault}" ${eventName}
 
-${actorName} ${eventName} the document "${document.title}", in the ${collection.name} collection.
+${actorName} ${eventName} the document "${document.titleWithDefault}"${
+      collection?.name ? `, in the ${collection.name} collection` : ""
+    }.
 
 Open Document: ${teamUrl}${document.url}
 `;
@@ -177,12 +176,13 @@ Open Document: ${teamUrl}${document.url}
 
         <Body>
           <Heading>
-            “{document.title}” {eventName}
+            “{document.titleWithDefault}” {eventName}
           </Heading>
           <p>
             {actorName} {eventName} the document{" "}
-            <a href={documentLink}>{document.title}</a>, in the{" "}
-            {collection.name} collection.
+            <a href={documentLink}>{document.titleWithDefault}</a>
+            {collection?.name ? <>, in the {collection.name} collection</> : ""}
+            .
           </p>
           {body && (
             <>

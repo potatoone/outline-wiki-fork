@@ -1,12 +1,13 @@
-import { observable } from "mobx";
+import { computed, observable } from "mobx";
 import Collection from "./Collection";
 import Document from "./Document";
 import User from "./User";
 import Model from "./base/Model";
 import Field from "./decorators/Field";
 import Relation from "./decorators/Relation";
+import { Searchable } from "./interfaces/Searchable";
 
-class Share extends Model {
+class Share extends Model implements Searchable {
   static modelName = "Share";
 
   @Field
@@ -59,9 +60,17 @@ class Share extends Model {
   @observable
   allowIndexing: boolean;
 
+  @observable
+  views: number;
+
   /** The user that shared the document. */
   @Relation(() => User, { onDelete: "null" })
   createdBy: User;
+
+  @computed
+  get searchContent(): string[] {
+    return [this.document?.title ?? this.documentTitle];
+  }
 }
 
 export default Share;

@@ -11,7 +11,7 @@ const useTestEmailService = env.isDevelopment && !env.SMTP_USERNAME;
 
 type SendMailOptions = {
   to: string;
-  from?: EmailAddress | string;
+  from: EmailAddress;
   replyTo?: string;
   messageId?: string;
   references?: string[];
@@ -122,11 +122,25 @@ export class Mailer {
   sendMail = async (data: SendMailOptions): Promise<void> => {
     const { transporter } = this;
 
-    if (!transporter) {
-      Logger.info(
+    if (env.isDevelopment) {
+      Logger.debug(
         "email",
-        `Attempted to send email "${data.subject}" to ${data.to} but no transport configured.`
+        [
+          `Sending email:`,
+          ``,
+          `--------------`,
+          `From:      ${data.from.address}`,
+          `To:        ${data.to}`,
+          `Subject:   ${data.subject}`,
+          `Preview:   ${data.previewText}`,
+          `--------------`,
+          ``,
+          data.text,
+        ].join("\n")
       );
+    }
+    if (!transporter) {
+      Logger.warn("No mail transport available");
       return;
     }
 
@@ -143,7 +157,7 @@ export class Mailer {
       Logger.info("email", `Sending email "${data.subject}" to ${data.to}`);
 
       const info = await transporter.sendMail({
-        from: env.isCloudHosted && data.from ? data.from : env.SMTP_FROM_EMAIL,
+        from: data.from,
         replyTo: data.replyTo ?? env.SMTP_REPLY_EMAIL ?? env.SMTP_FROM_EMAIL,
         to: data.to,
         messageId: data.messageId,

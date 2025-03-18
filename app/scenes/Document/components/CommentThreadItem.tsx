@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import styled, { css } from "styled-components";
 import breakpoint from "styled-components-breakpoint";
 import EventBoundary from "@shared/components/EventBoundary";
-import { s } from "@shared/styles";
+import { s, hover } from "@shared/styles";
 import { ProsemirrorData } from "@shared/types";
 import { dateToRelative } from "@shared/utils/date";
 import { Minute } from "@shared/utils/time";
@@ -28,7 +28,6 @@ import useActionContext from "~/hooks/useActionContext";
 import useBoolean from "~/hooks/useBoolean";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import CommentMenu from "~/menus/CommentMenu";
-import { hover } from "~/styles";
 import CommentEditor from "./CommentEditor";
 import { HighlightedText } from "./HighlightText";
 
@@ -197,21 +196,12 @@ function CommentThreadItem({
             {showAuthor && <em>{comment.createdBy.name}</em>}
             {showAuthor && showTime && <> &middot; </>}
             {showTime && (
-              <Time
-                dateTime={comment.createdAt}
-                tooltipDelay={500}
-                addSuffix
-                shorten
-              />
+              <Time dateTime={comment.createdAt} addSuffix shorten />
             )}
             {showEdited && (
               <>
                 {" "}
-                (
-                <Time dateTime={comment.updatedAt} tooltipDelay={500}>
-                  {t("edited")}
-                </Time>
-                )
+                (<Time dateTime={comment.updatedAt}>{t("edited")}</Time>)
               </>
             )}
           </Meta>
@@ -253,7 +243,7 @@ function CommentThreadItem({
                       onOpen={disableScroll}
                       onClose={enableScroll}
                       size={28}
-                      rounded
+                      $rounded
                     />
                   ) : undefined
                 }
@@ -264,17 +254,19 @@ function CommentThreadItem({
         <EventBoundary>
           {!isEditing && (
             <Actions gap={4} dir={dir}>
-              {firstOfThread && (
-                <ResolveButton onUpdate={handleUpdate} comment={comment} />
-              )}
               {!comment.isResolved && (
-                <Action
-                  as={ReactionPicker}
-                  onSelect={handleAddReaction}
-                  onOpen={disableScroll}
-                  onClose={enableScroll}
-                  rounded
-                />
+                <>
+                  {firstOfThread && (
+                    <ResolveButton onUpdate={handleUpdate} comment={comment} />
+                  )}
+                  <Action
+                    as={ReactionPicker}
+                    onSelect={handleAddReaction}
+                    onOpen={disableScroll}
+                    onClose={enableScroll}
+                    $rounded
+                  />
+                </>
               )}
               <Action
                 as={CommentMenu}
@@ -302,12 +294,7 @@ const ResolveButton = ({
   const { t } = useTranslation();
 
   return (
-    <Tooltip
-      content={t("Mark as resolved")}
-      placement="top"
-      delay={500}
-      hideOnClick
-    >
+    <Tooltip content={t("Mark as resolved")} placement="top" hideOnClick>
       <Action
         as={NudeButton}
         context={context}
@@ -315,7 +302,7 @@ const ResolveButton = ({
           comment,
           onResolve: () => onUpdate({ resolved: true }),
         })}
-        rounded
+        $rounded
       >
         <DoneIcon size={22} outline />
       </Action>
@@ -353,10 +340,10 @@ const Body = styled.form`
   border-radius: 2px;
 `;
 
-const Action = styled.span<{ rounded?: boolean }>`
+const Action = styled.span<{ $rounded?: boolean }>`
   color: ${s("textSecondary")};
   ${(props) =>
-    props.rounded &&
+    props.$rounded &&
     css`
       border-radius: 50%;
     `}

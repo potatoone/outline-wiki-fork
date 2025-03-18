@@ -13,17 +13,16 @@ import EditorContainer from "@shared/editor/components/Styles";
 import embeds from "@shared/editor/embeds";
 import GlobalStyles from "@shared/styles/globals";
 import light from "@shared/styles/theme";
-import { ProsemirrorData } from "@shared/types";
+import { MentionType, ProsemirrorData } from "@shared/types";
 import { attachmentRedirectRegex } from "@shared/utils/ProsemirrorHelper";
+import parseDocumentSlug from "@shared/utils/parseDocumentSlug";
 import { isRTL } from "@shared/utils/rtl";
 import { isInternalUrl } from "@shared/utils/urls";
 import { schema, parser } from "@server/editor";
 import Logger from "@server/logging/Logger";
 import { trace } from "@server/logging/tracing";
 import Attachment from "@server/models/Attachment";
-import User from "@server/models/User";
 import FileStorage from "@server/storage/files";
-import { TextHelper } from "./TextHelper";
 
 export type HTMLOptions = {
   /** A title, if it should be included */
@@ -39,7 +38,7 @@ export type HTMLOptions = {
 };
 
 export type MentionAttrs = {
-  type: string;
+  type: MentionType;
   label: string;
   modelId: string;
   actorId: string | undefined;
@@ -69,7 +68,6 @@ export class ProsemirrorHelper {
     //  the server we need to mimic this behavior.
     function urlsToEmbeds(node: Node): Node {
       if (node.type.name === "paragraph") {
-        // @ts-expect-error content
         for (const textNode of node.content.content) {
           for (const embed of embeds) {
             if (
@@ -91,8 +89,7 @@ export class ProsemirrorHelper {
       if (node.content) {
         const contentAsArray =
           node.content instanceof Fragment
-            ? // @ts-expect-error content
-              node.content.content
+            ? node.content.content
             : node.content;
         // @ts-expect-error content
         node.content = Fragment.fromArray(contentAsArray.map(urlsToEmbeds));
@@ -121,10 +118,13 @@ export class ProsemirrorHelper {
   /**
    * Converts a plain object into a Prosemirror Node.
    *
-   * @param data The object to parse
+   * @param data The ProsemirrorData object or string to parse.
    * @returns The content as a Prosemirror Node
    */
-  static toProsemirror(data: ProsemirrorData) {
+  static toProsemirror(data: ProsemirrorData | string) {
+    if (typeof data === "string") {
+      return parser.parse(data);
+    }
     return Node.fromJSON(schema, data);
   }
 
@@ -167,6 +167,50 @@ export class ProsemirrorHelper {
     });
 
     return mentions;
+  }
+
+  /**
+   * Returns an array of document IDs referenced through links or mentions in the node.
+   *
+   * @param node The node to parse document IDs from
+   * @returns An array of document IDs
+   */
+  static parseDocumentIds(doc: Node) {
+    const identifiers: string[] = [];
+
+    doc.descendants((node: Node) => {
+      if (
+        node.type.name === "mention" &&
+        node.attrs.type === MentionType.Document &&
+        !identifiers.includes(node.attrs.modelId)
+      ) {
+        identifiers.push(node.attrs.modelId);
+        return true;
+      }
+
+      if (node.type.name === "text") {
+        // get marks for text nodes
+        node.marks.forEach((mark) => {
+          // any of the marks identifiers?
+          if (mark.type.name === "link") {
+            const slug = parseDocumentSlug(mark.attrs.href);
+
+            // don't return the same link more than once
+            if (slug && !identifiers.includes(slug)) {
+              identifiers.push(slug);
+            }
+          }
+        });
+      }
+
+      if (!node.content.size) {
+        return false;
+      }
+
+      return true;
+    });
+
+    return identifiers;
   }
 
   /**
@@ -262,29 +306,6 @@ export class ProsemirrorHelper {
       return node;
     }
     return removeMarksInner(json);
-  }
-
-  /**
-   * Replaces all template variables in the node.
-   *
-   * @param data The ProsemirrorData object to replace variables in
-   * @param user The user to use for replacing variables
-   * @returns The content with variables replaced
-   */
-  static replaceTemplateVariables(data: ProsemirrorData, user: User) {
-    function replace(node: ProsemirrorData) {
-      if (node.type === "text" && node.text) {
-        node.text = TextHelper.replaceTemplateVariables(node.text, user);
-      }
-
-      if (node.content) {
-        node.content.forEach(replace);
-      }
-
-      return node;
-    }
-
-    return replace(data);
   }
 
   static async replaceInternalUrls(

@@ -13,19 +13,11 @@ import { RefHandle } from "~/components/ContentEditable";
 import { useDocumentContext } from "~/components/DocumentContext";
 import Editor, { Props as EditorProps } from "~/components/Editor";
 import Flex from "~/components/Flex";
-import BlockMenuExtension from "~/editor/extensions/BlockMenu";
-import ClipboardTextSerializer from "~/editor/extensions/ClipboardTextSerializer";
-import EmojiMenuExtension from "~/editor/extensions/EmojiMenu";
-import FindAndReplaceExtension from "~/editor/extensions/FindAndReplace";
-import HoverPreviewsExtension from "~/editor/extensions/HoverPreviews";
-import Keys from "~/editor/extensions/Keys";
-import MentionMenuExtension from "~/editor/extensions/MentionMenu";
-import PasteHandler from "~/editor/extensions/PasteHandler";
-import PreventTab from "~/editor/extensions/PreventTab";
-import SmartText from "~/editor/extensions/SmartText";
+import { withUIExtensions } from "~/editor/extensions";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useFocusedComment from "~/hooks/useFocusedComment";
+import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import usePolicy from "~/hooks/usePolicy";
 import useQuery from "~/hooks/useQuery";
 import useStores from "~/hooks/useStores";
@@ -39,20 +31,7 @@ import MultiplayerEditor from "./AsyncMultiplayerEditor";
 import DocumentMeta from "./DocumentMeta";
 import DocumentTitle from "./DocumentTitle";
 
-const extensions = [
-  ...withComments(richExtensions),
-  SmartText,
-  PasteHandler,
-  ClipboardTextSerializer,
-  BlockMenuExtension,
-  EmojiMenuExtension,
-  MentionMenuExtension,
-  FindAndReplaceExtension,
-  HoverPreviewsExtension,
-  // Order these default key handlers last
-  PreventTab,
-  Keys,
-];
+const extensions = withUIExtensions(withComments(richExtensions));
 
 type Props = Omit<EditorProps, "editorStyle"> & {
   onChangeTitle: (title: string) => void;
@@ -82,6 +61,7 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
   const user = useCurrentUser({ rejectOnEmpty: false });
   const team = useCurrentTeam({ rejectOnEmpty: false });
   const history = useHistory();
+  const sidebarContext = useLocationSidebarContext();
   const params = useQuery();
   const {
     document,
@@ -113,12 +93,15 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
         history.replace({
           search: focusedComment.isResolved ? "resolved=" : "",
           pathname: location.pathname,
-          state: { commentId: focusedComment.id },
+          state: {
+            commentId: focusedComment.id,
+            sidebarContext,
+          },
         });
       }
       ui.set({ commentsExpanded: true });
     }
-  }, [focusedComment, ui, document.id, history, params]);
+  }, [focusedComment, ui, document.id, history, params, sidebarContext]);
 
   // Save document when blurring title, but delay so that if clicking on a
   // button this is allowed to execute first.
@@ -143,10 +126,10 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
     (commentId: string) => {
       history.replace({
         pathname: window.location.pathname.replace(/\/history$/, ""),
-        state: { commentId },
+        state: { commentId, sidebarContext },
       });
     },
-    [history]
+    [history, sidebarContext]
   );
 
   // Create a Comment model in local store when a comment mark is created, this
@@ -171,10 +154,10 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
 
       history.replace({
         pathname: window.location.pathname.replace(/\/history$/, ""),
-        state: { commentId },
+        state: { commentId, sidebarContext },
       });
     },
-    [comments, user?.id, props.id, history]
+    [comments, user?.id, props.id, history, sidebarContext]
   );
 
   // Soft delete the Comment model when associated mark is totally removed.
@@ -216,6 +199,8 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
     [setEditorInitialized]
   );
 
+  const direction = titleRef.current?.getComputedDirection();
+
   return (
     <Flex auto column>
       <DocumentTitle
@@ -238,14 +223,14 @@ function DocumentEditor(props: Props, ref: React.RefObject<any>) {
       {!shareId && (
         <DocumentMeta
           document={document}
-          to={
-            match.path === matchDocumentHistory
-              ? documentPath(document)
-              : documentHistoryPath(document)
-          }
-          rtl={
-            titleRef.current?.getComputedDirection() === "rtl" ? true : false
-          }
+          to={{
+            pathname:
+              match.path === matchDocumentHistory
+                ? documentPath(document)
+                : documentHistoryPath(document),
+            state: { sidebarContext },
+          }}
+          rtl={direction === "rtl"}
         />
       )}
       <EditorComponent

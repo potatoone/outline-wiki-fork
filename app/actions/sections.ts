@@ -2,6 +2,8 @@ import { ActionContext } from "~/types";
 
 export const CollectionSection = ({ t }: ActionContext) => t("Collection");
 
+export const CollectionsSection = ({ t }: ActionContext) => t("Collections");
+
 export const ActiveCollectionSection = ({ t, stores }: ActionContext) => {
   const activeCollection = stores.collections.active;
   return `${t("Collection")} · ${activeCollection?.name}`;
@@ -12,6 +14,8 @@ ActiveCollectionSection.priority = 0.8;
 export const DeveloperSection = ({ t }: ActionContext) => t("Debug");
 
 export const DocumentSection = ({ t }: ActionContext) => t("Document");
+
+export const DocumentsSection = ({ t }: ActionContext) => t("Documents");
 
 export const ActiveDocumentSection = ({ t, stores }: ActionContext) => {
   const activeDocument = stores.documents.active;
@@ -33,6 +37,8 @@ export const NavigationSection = ({ t }: ActionContext) => t("Navigation");
 export const NotificationSection = ({ t }: ActionContext) => t("Notification");
 
 export const UserSection = ({ t }: ActionContext) => t("People");
+
+UserSection.priority = 0.5;
 
 export const TeamSection = ({ t }: ActionContext) => t("Workspace");
 

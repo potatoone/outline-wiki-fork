@@ -10,7 +10,6 @@ import type {
   SaveOptions,
 } from "sequelize";
 import {
-  Sequelize,
   Transaction,
   Op,
   FindOptions,
@@ -101,6 +100,9 @@ type AdditionalFindOptions = {
       },
     },
   },
+  attributes: {
+    exclude: ["state"],
+  },
 }))
 @Scopes(() => ({
   withCollectionPermissions: (userId: string, paranoid = true) => ({
@@ -129,17 +131,6 @@ type AdditionalFindOptions = {
         as: "collection",
       },
     ],
-  },
-  withStateIsEmpty: {
-    attributes: {
-      exclude: ["state"],
-      include: [
-        [
-          Sequelize.literal(`CASE WHEN state IS NULL THEN true ELSE false END`),
-          "stateIsEmpty",
-        ],
-      ],
-    },
   },
   withState: {
     attributes: {
@@ -839,7 +830,9 @@ class Document extends ArchivableModel<
     }
 
     this.content = revision.content;
-    this.text = revision.text;
+    this.text = DocumentHelper.toMarkdown(revision, {
+      includeTitle: false,
+    });
     this.title = revision.title;
     this.icon = revision.icon;
     this.color = revision.color;
@@ -990,7 +983,13 @@ class Document extends ArchivableModel<
     return false;
   };
 
-  unpublish = async (user: User) => {
+  /**
+   *
+   * @param user User who is performing the action
+   * @param options.detach Whether to detach the document from the containing collection
+   * @returns Updated document
+   */
+  unpublish = async (user: User, options: { detach: boolean }) => {
     // If the document is already a draft then calling unpublish should act like save
     if (!this.publishedAt) {
       return this.save();
@@ -1019,6 +1018,11 @@ class Document extends ArchivableModel<
     this.createdBy = user;
     this.updatedBy = user;
     this.publishedAt = null;
+
+    if (options.detach) {
+      this.collectionId = null;
+    }
+
     return this.save();
   };
 
@@ -1150,30 +1154,27 @@ class Document extends ArchivableModel<
     // Checking if the record is new is a performance optimization – new docs cannot have children
     const childDocuments = this.isNewRecord
       ? []
-      : await (this.constructor as typeof Document)
-          .unscoped()
-          .scope("withoutState")
-          .findAll({
-            where: options?.includeArchived
-              ? {
-                  teamId: this.teamId,
-                  parentDocumentId: this.id,
-                  publishedAt: {
-                    [Op.ne]: null,
-                  },
-                }
-              : {
-                  teamId: this.teamId,
-                  parentDocumentId: this.id,
-                  publishedAt: {
-                    [Op.ne]: null,
-                  },
-                  archivedAt: {
-                    [Op.is]: null,
-                  },
+      : await (this.constructor as typeof Document).unscoped().findAll({
+          where: options?.includeArchived
+            ? {
+                teamId: this.teamId,
+                parentDocumentId: this.id,
+                publishedAt: {
+                  [Op.ne]: null,
                 },
-            transaction: options?.transaction,
-          });
+              }
+            : {
+                teamId: this.teamId,
+                parentDocumentId: this.id,
+                publishedAt: {
+                  [Op.ne]: null,
+                },
+                archivedAt: {
+                  [Op.is]: null,
+                },
+              },
+          transaction: options?.transaction,
+        });
 
     const children = await Promise.all(
       childDocuments.map((child) => child.toNavigationNode(options))

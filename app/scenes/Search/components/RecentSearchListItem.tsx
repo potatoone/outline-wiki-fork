@@ -7,11 +7,10 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { s } from "@shared/styles";
+import { s, hover } from "@shared/styles";
 import type SearchQuery from "~/models/SearchQuery";
 import NudeButton from "~/components/NudeButton";
 import Tooltip from "~/components/Tooltip";
-import { hover } from "~/styles";
 import { searchPath } from "~/utils/routeHelpers";
 
 type Props = {
@@ -28,12 +27,12 @@ function RecentSearchListItem({ searchQuery }: Props) {
 
   return (
     <RecentSearch
-      to={searchPath(searchQuery.query)}
+      to={searchPath({ query: searchQuery.query })}
       ref={ref}
       {...rovingTabIndex}
     >
       {searchQuery.query}
-      <Tooltip content={t("Remove search")} delay={150}>
+      <Tooltip content={t("Remove search")}>
         <RemoveButton
           aria-label={t("Remove search")}
           onClick={async (ev) => {
@@ -52,7 +51,9 @@ const RemoveButton = styled(NudeButton)`
   opacity: 0;
   color: ${s("textTertiary")};
 
-  &:hover {
+  &:focus,
+  &:${hover} {
+    opacity: 1;
     color: ${s("text")};
   }
 `;
@@ -62,17 +63,11 @@ const RecentSearch = styled(Link)`
   justify-content: space-between;
   color: ${s("textSecondary")};
   cursor: var(--pointer);
-  padding: 1px 4px;
+  padding: 1px 8px;
   border-radius: 4px;
-  position: relative;
+  line-height: 24px;
   font-size: 14px;
-
-  &:before {
-    content: "·";
-    color: ${s("textTertiary")};
-    position: absolute;
-    left: -8px;
-  }
+  margin: 0 -8px;
 
   &:focus-visible {
     outline: none;

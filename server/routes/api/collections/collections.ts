@@ -211,7 +211,7 @@ router.post(
     authorize(user, "update", collection);
     authorize(user, "read", group);
 
-    const [membership] = await GroupMembership.findOrCreate({
+    const [membership, created] = await GroupMembership.findOrCreate({
       where: {
         collectionId: id,
         groupId,
@@ -220,29 +220,19 @@ router.post(
         permission,
         createdById: user.id,
       },
-      transaction,
       lock: transaction.LOCK.UPDATE,
+      ...ctx.context,
     });
 
-    membership.permission = permission;
-    await membership.save({ transaction });
-
-    await Event.createFromContext(ctx, {
-      name: "collections.add_group",
-      collectionId: collection.id,
-      modelId: groupId,
-      data: {
-        name: group.name,
-        membershipId: membership.id,
-      },
-    });
+    if (!created) {
+      membership.permission = permission;
+      await membership.save(ctx.context);
+    }
 
     const groupMemberships = [presentGroupMembership(membership)];
 
     ctx.body = {
       data: {
-        // `collectionGroupMemberships` retained for backwards compatibility – remove after version v0.79.0
-        collectionGroupMemberships: groupMemberships,
         groupMemberships,
       },
     };
@@ -281,22 +271,7 @@ router.post(
       ctx.throw(400, "This Group is not a part of the collection");
     }
 
-    await GroupMembership.destroy({
-      where: {
-        collectionId: id,
-        groupId,
-      },
-      transaction,
-    });
-    await Event.createFromContext(ctx, {
-      name: "collections.remove_group",
-      collectionId: collection.id,
-      modelId: groupId,
-      data: {
-        name: group.name,
-        membershipId: membership.id,
-      },
-    });
+    await membership.destroy(ctx.context);
 
     ctx.body = {
       success: true,
@@ -362,8 +337,6 @@ router.post(
     ctx.body = {
       pagination: { ...ctx.state.pagination, total },
       data: {
-        // `collectionGroupMemberships` retained for backwards compatibility – remove after version v0.79.0
-        collectionGroupMemberships: groupMemberships,
         groupMemberships,
         groups: await Promise.all(
           memberships.map((membership) => presentGroup(membership.group))
@@ -380,8 +353,8 @@ router.post(
   validate(T.CollectionsAddUserSchema),
   transaction(),
   async (ctx: APIContext<T.CollectionsAddUserReq>) => {
-    const { auth, transaction } = ctx.state;
-    const actor = auth.user;
+    const { transaction } = ctx.state;
+    const { user: actor } = ctx.state.auth;
     const { id, userId, permission } = ctx.input.body;
 
     const [collection, user] = await Promise.all([
@@ -402,25 +375,14 @@ router.post(
         permission: permission || user.defaultCollectionPermission,
         createdById: actor.id,
       },
-      transaction,
       lock: transaction.LOCK.UPDATE,
+      ...ctx.context,
     });
 
-    if (permission) {
+    if (!isNew && permission) {
       membership.permission = permission;
-      await membership.save({ transaction });
+      await membership.save(ctx.context);
     }
-
-    await Event.createFromContext(ctx, {
-      name: "collections.add_user",
-      userId,
-      modelId: membership.id,
-      collectionId: collection.id,
-      data: {
-        isNew,
-        permission: membership.permission,
-      },
-    });
 
     ctx.body = {
       data: {
@@ -437,8 +399,8 @@ router.post(
   validate(T.CollectionsRemoveUserSchema),
   transaction(),
   async (ctx: APIContext<T.CollectionsRemoveUserReq>) => {
-    const { auth, transaction } = ctx.state;
-    const actor = auth.user;
+    const { transaction } = ctx.state;
+    const { user: actor } = ctx.state.auth;
     const { id, userId } = ctx.input.body;
 
     const [collection, user] = await Promise.all([
@@ -458,17 +420,7 @@ router.post(
       ctx.throw(400, "User is not a collection member");
     }
 
-    await collection.$remove("user", user, { transaction });
-
-    await Event.createFromContext(ctx, {
-      name: "collections.remove_user",
-      userId,
-      modelId: membership.id,
-      collectionId: collection.id,
-      data: {
-        name: user.name,
-      },
-    });
+    await membership.destroy(ctx.context);
 
     ctx.body = {
       success: true,
@@ -750,7 +702,7 @@ router.post(
   pagination(),
   transaction(),
   async (ctx: APIContext<T.CollectionsListReq>) => {
-    const { includeListOnly, statusFilter } = ctx.input.body;
+    const { includeListOnly, query, statusFilter } = ctx.input.body;
     const { user } = ctx.state.auth;
     const { transaction } = ctx.state;
     const collectionIds = await user.collectionIds({ transaction });
@@ -776,6 +728,12 @@ router.post(
       where[Op.and].push({ id: collectionIds });
     }
 
+    if (query) {
+      where[Op.and].push(
+        Sequelize.literal(`unaccent(LOWER(name)) like unaccent(LOWER(:query))`)
+      );
+    }
+
     const statusQuery = [];
     if (statusFilter?.includes(CollectionStatusFilter.Archived)) {
       statusQuery.push({
@@ -791,6 +749,8 @@ router.post(
       });
     }
 
+    const replacements = { query: `%${query}%` };
+
     const [collections, total] = await Promise.all([
       Collection.scope(
         statusFilter?.includes(CollectionStatusFilter.Archived)
@@ -805,6 +765,7 @@ router.post(
             }
       ).findAll({
         where,
+        replacements,
         order: [
           Sequelize.literal('"collection"."index" collate "C"'),
           ["updatedAt", "DESC"],
@@ -813,7 +774,12 @@ router.post(
         limit: ctx.state.pagination.limit,
         transaction,
       }),
-      Collection.count({ where, transaction }),
+      Collection.count({
+        where,
+        // @ts-expect-error Types are incorrect for count
+        replacements,
+        transaction,
+      }),
     ]);
 
     const nullIndex = collections.findIndex(

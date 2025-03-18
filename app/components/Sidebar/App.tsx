@@ -1,26 +1,25 @@
 import { observer } from "mobx-react";
-import { DraftsIcon, SearchIcon, HomeIcon, SidebarIcon } from "outline-icons";
+import { SearchIcon, HomeIcon, SidebarIcon } from "outline-icons";
 import * as React from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { useTranslation } from "react-i18next";
 import styled from "styled-components";
-import Flex from "~/components/Flex";
+import { metaDisplay } from "@shared/utils/keyboard";
 import Scrollable from "~/components/Scrollable";
-import Text from "~/components/Text";
 import { inviteUser } from "~/actions/definitions/users";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
 import OrganizationMenu from "~/menus/OrganizationMenu";
-import { metaDisplay } from "~/utils/keyboard";
-import { homePath, draftsPath, searchPath } from "~/utils/routeHelpers";
+import { homePath, searchPath } from "~/utils/routeHelpers";
 import TeamLogo from "../TeamLogo";
 import Tooltip from "../Tooltip";
 import Sidebar from "./Sidebar";
 import ArchiveLink from "./components/ArchiveLink";
 import Collections from "./components/Collections";
+import { DraftsLink } from "./components/DraftsLink";
 import DragPlaceholder from "./components/DragPlaceholder";
 import HistoryNavigation from "./components/HistoryNavigation";
 import Section from "./components/Section";
@@ -80,7 +79,6 @@ function AppSidebar() {
                 <Tooltip
                   content={t("Toggle sidebar")}
                   shortcut={`${metaDisplay}+.`}
-                  delay={500}
                 >
                   <ToggleButton
                     position="bottom"
@@ -108,24 +106,7 @@ function AppSidebar() {
                 label={t("Search")}
                 exact={false}
               />
-              {can.createDocument && (
-                <SidebarLink
-                  to={draftsPath()}
-                  icon={<DraftsIcon />}
-                  label={
-                    <Flex align="center" justify="space-between">
-                      {t("Drafts")}
-                      {documents.totalDrafts > 0 ? (
-                        <Drafts size="xsmall" type="tertiary">
-                          {documents.totalDrafts > 25
-                            ? "25+"
-                            : documents.totalDrafts}
-                        </Drafts>
-                      ) : null}
-                    </Flex>
-                  }
-                />
-              )}
+              {can.createDocument && <DraftsLink />}
             </Section>
           </Overflow>
           <Scrollable flex shadow>
@@ -157,10 +138,6 @@ function AppSidebar() {
 const Overflow = styled.div`
   overflow: hidden;
   flex-shrink: 0;
-`;
-
-const Drafts = styled(Text)`
-  margin: 0 4px;
 `;
 
 export default observer(AppSidebar);

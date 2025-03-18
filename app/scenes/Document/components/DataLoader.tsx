@@ -6,16 +6,19 @@ import { ProsemirrorHelper } from "@shared/utils/ProsemirrorHelper";
 import { RevisionHelper } from "@shared/utils/RevisionHelper";
 import Document from "~/models/Document";
 import Revision from "~/models/Revision";
-import Error402 from "~/scenes/Error402";
-import Error404 from "~/scenes/Error404";
-import ErrorOffline from "~/scenes/ErrorOffline";
+import Error402 from "~/scenes/Errors/Error402";
+import Error403 from "~/scenes/Errors/Error403";
+import Error404 from "~/scenes/Errors/Error404";
+import ErrorOffline from "~/scenes/Errors/ErrorOffline";
 import { useDocumentContext } from "~/components/DocumentContext";
 import useCurrentTeam from "~/hooks/useCurrentTeam";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import usePolicy from "~/hooks/usePolicy";
 import useStores from "~/hooks/useStores";
+import { Properties } from "~/types";
 import Logger from "~/utils/Logger";
 import {
+  AuthorizationError,
   NotFoundError,
   OfflineError,
   PaymentRequiredError,
@@ -23,6 +26,7 @@ import {
 import history from "~/utils/history";
 import { matchDocumentEdit, settingsPath } from "~/utils/routeHelpers";
 import Loading from "./Loading";
+import MarkAsViewed from "./MarkAsViewed";
 
 type Params = {
   /** The document urlId + slugified title  */
@@ -45,7 +49,10 @@ type Children = (options: {
   revision: Revision | undefined;
   abilities: Record<string, boolean>;
   readOnly: boolean;
-  onCreateLink: (title: string, nested?: boolean) => Promise<string>;
+  onCreateLink: (
+    params: Properties<Document>,
+    nested?: boolean
+  ) => Promise<string>;
   sharedTree: NavigationNode | undefined;
 }) => React.ReactNode;
 
@@ -142,7 +149,7 @@ function DataLoader({ match, children }: Props) {
   }, [document?.id, document?.isDeleted, revisionId, views]);
 
   const onCreateLink = React.useCallback(
-    async (title: string, nested?: boolean) => {
+    async (params: Properties<Document>, nested?: boolean) => {
       if (!document) {
         throw new Error("Document not loaded yet");
       }
@@ -151,8 +158,8 @@ function DataLoader({ match, children }: Props) {
         {
           collectionId: nested ? undefined : document.collectionId,
           parentDocumentId: nested ? document.id : document.parentDocumentId,
-          title,
           data: ProsemirrorHelper.getEmptyDocument(),
+          ...params,
         },
         {
           publish: document.isDraft ? undefined : true,
@@ -178,7 +185,7 @@ function DataLoader({ match, children }: Props) {
 
       // Prevents unauthorized request to load share information for the document
       // when viewing a public share link
-      if (can.read && !document.isDeleted) {
+      if (can.read && !document.isDeleted && !revisionId) {
         if (team.getPreference(TeamPreference.Commenting)) {
           void comments.fetchAll({
             documentId: document.id,
@@ -194,13 +201,25 @@ function DataLoader({ match, children }: Props) {
         });
       }
     }
-  }, [can.read, can.update, document, isEditRoute, comments, team, shares, ui]);
+  }, [
+    can.read,
+    can.update,
+    document,
+    isEditRoute,
+    comments,
+    team,
+    shares,
+    ui,
+    revisionId,
+  ]);
 
   if (error) {
     return error instanceof OfflineError ? (
       <ErrorOffline />
     ) : error instanceof PaymentRequiredError ? (
       <Error402 />
+    ) : error instanceof AuthorizationError ? (
+      <Error403 />
     ) : (
       <Error404 />
     );
@@ -222,16 +241,19 @@ function DataLoader({ match, children }: Props) {
   const readOnly = !isEditing || !canEdit;
 
   return (
-    <React.Fragment key={canEdit ? "edit" : "read"}>
-      {children({
-        document,
-        revision,
-        abilities: can,
-        readOnly,
-        onCreateLink,
-        sharedTree,
-      })}
-    </React.Fragment>
+    <>
+      {!shareId && !revision && <MarkAsViewed document={document} />}
+      <React.Fragment key={canEdit ? "edit" : "read"}>
+        {children({
+          document,
+          revision,
+          abilities: can,
+          readOnly,
+          onCreateLink,
+          sharedTree,
+        })}
+      </React.Fragment>
+    </>
   );
 }
 

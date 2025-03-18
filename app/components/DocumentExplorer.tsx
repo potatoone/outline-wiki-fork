@@ -14,32 +14,32 @@ import { FixedSizeList as List } from "react-window";
 import scrollIntoView from "scroll-into-view-if-needed";
 import styled, { useTheme } from "styled-components";
 import breakpoint from "styled-components-breakpoint";
-import { NavigationNode } from "@shared/types";
+import Icon from "@shared/components/Icon";
+import { NavigationNode, NavigationNodeType } from "@shared/types";
+import { isModKey } from "@shared/utils/keyboard";
 import DocumentExplorerNode from "~/components/DocumentExplorerNode";
 import DocumentExplorerSearchResult from "~/components/DocumentExplorerSearchResult";
 import Flex from "~/components/Flex";
-import Icon from "~/components/Icon";
 import CollectionIcon from "~/components/Icons/CollectionIcon";
 import { Outline } from "~/components/Input";
 import InputSearch from "~/components/InputSearch";
 import Text from "~/components/Text";
 import useMobile from "~/hooks/useMobile";
 import useStores from "~/hooks/useStores";
-import { isModKey } from "~/utils/keyboard";
 import { ancestors, descendants } from "~/utils/tree";
 
 type Props = {
   /** Action taken upon submission of selected item, could be publish, move etc. */
   onSubmit: () => void;
-
   /** A side-effect of item selection */
   onSelect: (item: NavigationNode | null) => void;
-
   /** Items to be shown in explorer */
   items: NavigationNode[];
+  /** Automatically expand to and select item with the given id */
+  defaultValue?: string;
 };
 
-function DocumentExplorer({ onSubmit, onSelect, items }: Props) {
+function DocumentExplorer({ onSubmit, onSelect, items, defaultValue }: Props) {
   const isMobile = useMobile();
   const { collections, documents } = useStores();
   const { t } = useTranslation();
@@ -47,12 +47,25 @@ function DocumentExplorer({ onSubmit, onSelect, items }: Props) {
 
   const [searchTerm, setSearchTerm] = React.useState<string>();
   const [selectedNode, selectNode] = React.useState<NavigationNode | null>(
-    null
+    () => {
+      const node =
+        defaultValue && items.find((item) => item.id === defaultValue);
+      return node || null;
+    }
   );
   const [initialScrollOffset, setInitialScrollOffset] =
     React.useState<number>(0);
   const [activeNode, setActiveNode] = React.useState<number>(0);
-  const [expandedNodes, setExpandedNodes] = React.useState<string[]>([]);
+  const [expandedNodes, setExpandedNodes] = React.useState<string[]>(() => {
+    if (defaultValue) {
+      const node = items.find((item) => item.id === defaultValue);
+      if (node) {
+        return ancestors(node).map((node) => node.id);
+      }
+    }
+    return [];
+  });
+
   const [itemRefs, setItemRefs] = React.useState<
     React.RefObject<HTMLSpanElement>[]
   >([]);
@@ -64,6 +77,10 @@ function DocumentExplorer({ onSubmit, onSelect, items }: Props) {
 
   const VERTICAL_PADDING = 6;
   const HORIZONTAL_PADDING = 24;
+
+  const recentlyViewedItemIds = documents.recentlyViewed
+    .slice(0, 5)
+    .map((item) => item.id);
 
   const searchIndex = React.useMemo(
     () =>
@@ -94,6 +111,15 @@ function DocumentExplorer({ onSubmit, onSelect, items }: Props) {
     onSelect(selectedNode);
   }, [selectedNode, onSelect]);
 
+  React.useEffect(() => {
+    if (defaultValue && selectedNode && listRef) {
+      const index = nodes.findIndex((node) => node.id === selectedNode.id);
+      if (index > 0) {
+        setTimeout(() => listRef.current?.scrollToItem(index, "center"), 50);
+      }
+    }
+  }, []);
+
   function getNodes() {
     function includeDescendants(item: NavigationNode): NavigationNode[] {
       return expandedNodes.includes(item.id)
@@ -104,11 +130,18 @@ function DocumentExplorer({ onSubmit, onSelect, items }: Props) {
     return searchTerm
       ? searchIndex.search(searchTerm)
       : items
-          .filter((item) => item.type === "collection")
+          .filter((item) => recentlyViewedItemIds.includes(item.id))
+          .concat(
+            items.filter((item) => item.type === NavigationNodeType.Collection)
+          )
           .flatMap(includeDescendants);
   }
 
   const nodes = getNodes();
+  const baseDepth = nodes.reduce(
+    (min, node) => (node.depth ? Math.min(min, node.depth) : min),
+    Infinity
+  );
 
   const scrollNodeIntoView = React.useCallback(
     (node: number) => {
@@ -282,7 +315,7 @@ function DocumentExplorer({ onSubmit, onSelect, items }: Props) {
           expanded={isExpanded(index)}
           icon={renderedIcon}
           title={title}
-          depth={node.depth as number}
+          depth={(node.depth ?? 0) - baseDepth}
           hasChildren={hasChildren(index)}
           ref={itemRefs[index]}
         />
