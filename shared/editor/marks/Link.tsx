@@ -126,7 +126,7 @@ export default class Link extends Mark {
                 sanitizeUrl(range.mark.attrs.href),
                 event
               );
-            } catch (err) {
+            } catch (_err) {
               toast.error(this.options.dictionary.openLinkError);
             }
             return true;
@@ -156,7 +156,7 @@ export default class Link extends Mark {
 
         view.dispatch(tr);
         return true;
-      } catch (err) {
+      } catch (_err) {
         // Failed to set selection
       }
       return false;
@@ -179,7 +179,10 @@ export default class Link extends Mark {
           },
           mousedown: (view: EditorView, event: MouseEvent) => {
             const target = (event.target as HTMLElement)?.closest("a");
-            if (!(target instanceof HTMLAnchorElement) || event.button !== 0) {
+            if (
+              !(target instanceof HTMLAnchorElement) ||
+              (event.button !== 0 && event.button !== 1)
+            ) {
               return false;
             }
 
@@ -205,7 +208,7 @@ export default class Link extends Mark {
                   event.preventDefault();
                   this.options.onClickLink(sanitizeUrl(href), event);
                 }
-              } catch (err) {
+              } catch (_err) {
                 toast.error(this.options.dictionary.openLinkError);
               }
 
@@ -224,7 +227,7 @@ export default class Link extends Mark {
 
             return false;
           },
-          click: (view: EditorView, event: MouseEvent) => {
+          click: (_view: EditorView, event: MouseEvent) => {
             if (
               !(event.target instanceof HTMLAnchorElement) ||
               event.button !== 0

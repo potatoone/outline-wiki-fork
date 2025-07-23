@@ -19,6 +19,7 @@ type Props = Optional<
     | "collectionId"
     | "parentDocumentId"
     | "importId"
+    | "apiImportId"
     | "template"
     | "fullWidth"
     | "sourceMetadata"
@@ -51,6 +52,7 @@ export default async function documentCreator({
   templateDocument,
   fullWidth,
   importId,
+  apiImportId,
   createdAt,
   // allows override for import
   updatedAt,
@@ -90,16 +92,18 @@ export default async function documentCreator({
         : TextHelper.replaceTemplateVariables(templateDocument.title, user)
       : "");
 
-  const contentWithReplacements = text
-    ? ProsemirrorHelper.toProsemirror(text).toJSON()
-    : templateDocument
-    ? template
-      ? templateDocument.content
-      : SharedProsemirrorHelper.replaceTemplateVariables(
-          await DocumentHelper.toJSON(templateDocument),
-          user
-        )
-    : content;
+  const contentWithReplacements = content
+    ? content
+    : text
+      ? ProsemirrorHelper.toProsemirror(text).toJSON()
+      : templateDocument
+        ? template
+          ? templateDocument.content
+          : SharedProsemirrorHelper.replaceTemplateVariables(
+              await DocumentHelper.toJSON(templateDocument),
+              user
+            )
+        : ProsemirrorHelper.toProsemirror("").toJSON();
 
   const document = Document.build({
     id,
@@ -116,6 +120,7 @@ export default async function documentCreator({
     templateId,
     publishedAt,
     importId,
+    apiImportId,
     sourceMetadata,
     fullWidth: fullWidth ?? templateDocument?.fullWidth,
     icon: icon ?? templateDocument?.icon,
@@ -142,7 +147,7 @@ export default async function documentCreator({
       teamId: document.teamId,
       actorId: user.id,
       data: {
-        source: importId ? "import" : undefined,
+        source: importId || apiImportId ? "import" : undefined,
         title: document.title,
         templateId,
       },

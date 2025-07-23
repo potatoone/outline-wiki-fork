@@ -16,6 +16,7 @@ import { useDocumentContext } from "~/components/DocumentContext";
 import Facepile from "~/components/Facepile";
 import Fade from "~/components/Fade";
 import { ResizingHeightContainer } from "~/components/ResizingHeightContainer";
+import useBoolean from "~/hooks/useBoolean";
 import { useLocationSidebarContext } from "~/hooks/useLocationSidebarContext";
 import useOnClickOutside from "~/hooks/useOnClickOutside";
 import usePersistedState from "~/hooks/usePersistedState";
@@ -34,10 +35,6 @@ type Props = {
   focused: boolean;
   /** Whether the thread is displayed in a recessed/backgrounded state */
   recessed: boolean;
-  /** Enable scroll for the comments container */
-  enableScroll: () => void;
-  /** Disable scroll for the comments container */
-  disableScroll: () => void;
   /** Number of replies before collapsing */
   collapseThreshold?: number;
   /** Number of replies to display when collapsed */
@@ -49,8 +46,6 @@ function CommentThread({
   document,
   recessed,
   focused,
-  enableScroll,
-  disableScroll,
   collapseThreshold = 5,
   collapseNumDisplayed = 3,
 }: Props) {
@@ -63,7 +58,7 @@ function CommentThread({
   const history = useHistory();
   const location = useLocation();
   const sidebarContext = useLocationSidebarContext();
-  const [autoFocus, setAutoFocus] = React.useState(thread.isNew);
+  const [autoFocus, setAutoFocusOn, setAutoFocusOff] = useBoolean(thread.isNew);
 
   const can = usePolicy(document);
 
@@ -156,9 +151,9 @@ function CommentThread({
 
   React.useEffect(() => {
     if (!focused && autoFocus) {
-      setAutoFocus(false);
+      setAutoFocusOff();
     }
-  }, [focused, autoFocus]);
+  }, [focused, autoFocus, setAutoFocusOff]);
 
   React.useEffect(() => {
     if (focused) {
@@ -247,8 +242,6 @@ function CommentThread({
             lastOfAuthor={lastOfAuthor}
             previousCommentCreatedAt={commentsInThread[index - 1]?.createdAt}
             dir={document.dir}
-            enableScroll={enableScroll}
-            disableScroll={disableScroll}
           />
         );
       })}
@@ -273,7 +266,7 @@ function CommentThread({
         )}
       </ResizingHeightContainer>
       {!focused && !recessed && !draft && canReply && (
-        <Reply onClick={() => setAutoFocus(true)}>{t("Reply")}…</Reply>
+        <Reply onClick={setAutoFocusOn}>{t("Reply")}…</Reply>
       )}
     </Thread>
   );

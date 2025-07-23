@@ -1,5 +1,6 @@
 import copy from "copy-to-clipboard";
 import invariant from "invariant";
+import uniqBy from "lodash/uniqBy";
 import {
   DownloadIcon,
   DuplicateIcon,
@@ -29,8 +30,8 @@ import {
   PadlockIcon,
   GlobeIcon,
   LogoutIcon,
+  CaseSensitiveIcon,
 } from "outline-icons";
-import * as React from "react";
 import { toast } from "sonner";
 import Icon from "@shared/components/Icon";
 import {
@@ -84,8 +85,9 @@ export const openDocument = createAction({
       (acc, node) => [...acc, ...node.children],
       [] as NavigationNode[]
     );
+    const documents = stores.documents.orderedData;
 
-    return nodes.map((item) => ({
+    return uniqBy([...documents, ...nodes], "id").map((item) => ({
       // Note: using url which includes the slug rather than id here to bust
       // cache if the document is renamed
       id: item.url,
@@ -96,7 +98,7 @@ export const openDocument = createAction({
         <DocumentIcon />
       ),
       section: DocumentSection,
-      perform: () => history.push(item.url),
+      to: item.url,
     }));
   },
 });
@@ -510,6 +512,25 @@ export const copyDocumentAsMarkdown = createAction({
   },
 });
 
+export const copyDocumentAsPlainText = createAction({
+  name: ({ t }) => t("Copy as text"),
+  section: ActiveDocumentSection,
+  keywords: "clipboard",
+  icon: <CaseSensitiveIcon />,
+  iconInContextMenu: false,
+  visible: ({ activeDocumentId, stores }) =>
+    !!activeDocumentId && stores.policies.abilities(activeDocumentId).download,
+  perform: ({ stores, activeDocumentId, t }) => {
+    const document = activeDocumentId
+      ? stores.documents.get(activeDocumentId)
+      : undefined;
+    if (document) {
+      copy(document.toPlainText());
+      toast.success(t("Text copied to clipboard"));
+    }
+  },
+});
+
 export const copyDocumentShareLink = createAction({
   name: ({ t }) => t("Copy public link"),
   section: ActiveDocumentSection,
@@ -555,7 +576,12 @@ export const copyDocument = createAction({
   section: ActiveDocumentSection,
   icon: <CopyIcon />,
   keywords: "clipboard",
-  children: [copyDocumentLink, copyDocumentShareLink, copyDocumentAsMarkdown],
+  children: [
+    copyDocumentLink,
+    copyDocumentShareLink,
+    copyDocumentAsMarkdown,
+    copyDocumentAsPlainText,
+  ],
 });
 
 export const duplicateDocument = createAction({
@@ -726,7 +752,7 @@ export const importDocument = createAction({
 
     return false;
   },
-  perform: ({ activeCollectionId, activeDocumentId, stores }) => {
+  perform: ({ activeDocumentId, activeCollectionId, stores }) => {
     const { documents } = stores;
     const input = document.createElement("input");
     input.type = "file";
@@ -814,7 +840,7 @@ export const searchDocumentsForQuery = (query: string) =>
     analyticsName: "Search documents",
     section: DocumentSection,
     icon: <SearchIcon />,
-    perform: () => history.push(searchPath({ query })),
+    to: searchPath({ query }),
     visible: ({ location }) => location.pathname !== searchPath(),
   });
 
@@ -1059,6 +1085,7 @@ export const openDocumentComments = createAction({
   icon: <CommentIcon />,
   visible: ({ activeDocumentId, stores }) => {
     const can = stores.policies.abilities(activeDocumentId ?? "");
+
     return (
       !!activeDocumentId &&
       can.comment &&
@@ -1186,7 +1213,7 @@ export const leaveDocument = createAction({
       } as UserMembership);
 
       toast.success(t("You have left the shared document"));
-    } catch (err) {
+    } catch (_err) {
       toast.error(t("Could not leave document"));
     }
   },
@@ -1205,6 +1232,7 @@ export const rootDocumentActions = [
   copyDocumentLink,
   copyDocumentShareLink,
   copyDocumentAsMarkdown,
+  copyDocumentAsPlainText,
   starDocument,
   unstarDocument,
   publishDocument,

@@ -166,11 +166,13 @@ export function useDropToReorderStar(getIndex?: () => string) {
  * @param node The NavigationNode model to drag.
  * @param depth The depth of the node in the sidebar.
  * @param document The related Document model.
+ * @param isEditing Whether the sidebar item is currently being edited.
  */
 export function useDragDocument(
   node: NavigationNode,
   depth: number,
-  document?: Document
+  document?: Document,
+  isEditing?: boolean
 ) {
   const icon = document?.icon || node.icon || node.emoji;
   const color = document?.color || node.color;
@@ -187,8 +189,8 @@ export function useDragDocument(
         depth,
         icon: icon ? <Icon value={icon} color={color} /> : undefined,
         collectionId: document?.collectionId || "",
-      } as DragObject),
-    canDrag: () => !!document?.isActive,
+      }) as DragObject,
+    canDrag: () => !!document?.isActive && !isEditing,
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -503,7 +505,7 @@ export function useDragMembership(
         id,
         title,
         icon,
-      } as DragObject),
+      }) as DragObject,
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),

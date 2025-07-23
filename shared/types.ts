@@ -1,8 +1,16 @@
+/** Available user roles. */
 export enum UserRole {
   Admin = "admin",
   Member = "member",
   Viewer = "viewer",
   Guest = "guest",
+}
+
+/** Scopes for OAuth and API keys. */
+export enum Scope {
+  Read = "read",
+  Write = "write",
+  Create = "create",
 }
 
 export type DateFilter = "day" | "week" | "month" | "year";
@@ -54,10 +62,29 @@ export enum FileOperationState {
   Expired = "expired",
 }
 
+export enum ImportState {
+  Created = "created",
+  InProgress = "in_progress",
+  Processed = "processed",
+  Completed = "completed",
+  Errored = "errored",
+  Canceled = "canceled",
+}
+
+export enum ImportTaskState {
+  Created = "created",
+  InProgress = "in_progress",
+  Completed = "completed",
+  Errored = "errored",
+  Canceled = "canceled",
+}
+
 export enum MentionType {
   User = "user",
   Document = "document",
   Collection = "collection",
+  Issue = "issue",
+  PullRequest = "pull_request",
 }
 
 export type PublicEnv = {
@@ -86,6 +113,8 @@ export enum IntegrationType {
   Analytics = "analytics",
   /** An integration that maps an Outline user to an external service. */
   LinkedAccount = "linkedAccount",
+  /** An integration that imports documents into Outline. */
+  Import = "import",
 }
 
 export enum IntegrationService {
@@ -96,7 +125,28 @@ export enum IntegrationService {
   Matomo = "matomo",
   Umami = "umami",
   GitHub = "github",
+  Linear = "linear",
+  Notion = "notion",
 }
+
+export type ImportableIntegrationService = Extract<
+  IntegrationService,
+  IntegrationService.Notion
+>;
+
+export const ImportableIntegrationService = {
+  Notion: IntegrationService.Notion,
+} as const;
+
+export type IssueTrackerIntegrationService = Extract<
+  IntegrationService,
+  IntegrationService.GitHub | IntegrationService.Linear
+>;
+
+export const IssueTrackerIntegrationService = {
+  GitHub: IntegrationService.GitHub,
+  Linear: IntegrationService.Linear,
+} as const;
 
 export type UserCreatableIntegrationService = Extract<
   IntegrationService,
@@ -129,35 +179,46 @@ export enum DocumentPermission {
 
 export type IntegrationSettings<T> = T extends IntegrationType.Embed
   ? {
-      url: string;
+      url?: string;
       github?: {
         installation: {
           id: number;
           account: { id: number; name: string; avatarUrl: string };
         };
       };
+      linear?: {
+        workspace: { id: string; name: string; key: string; logoUrl?: string };
+      };
     }
   : T extends IntegrationType.Analytics
-  ? { measurementId: string; instanceUrl?: string; scriptName?: string }
-  : T extends IntegrationType.Post
-  ? { url: string; channel: string; channelId: string }
-  : T extends IntegrationType.Command
-  ? { serviceTeamId: string }
-  :
-      | { url: string }
-      | {
-          github?: {
-            installation: {
-              id: number;
-              account: { id?: number; name: string; avatarUrl?: string };
-            };
-          };
-        }
-      | { url: string; channel: string; channelId: string }
-      | { serviceTeamId: string }
-      | { measurementId: string }
-      | { slack: { serviceTeamId: string; serviceUserId: string } }
-      | undefined;
+    ? { measurementId: string; instanceUrl?: string; scriptName?: string }
+    : T extends IntegrationType.Post
+      ? { url: string; channel: string; channelId: string }
+      : T extends IntegrationType.Command
+        ? { serviceTeamId: string }
+        : T extends IntegrationType.Import
+          ? {
+              externalWorkspace: { id: string; name: string; iconUrl?: string };
+            }
+          :
+              | { url: string }
+              | {
+                  github?: {
+                    installation: {
+                      id: number;
+                      account: {
+                        id?: number;
+                        name: string;
+                        avatarUrl?: string;
+                      };
+                    };
+                  };
+                }
+              | { url: string; channel: string; channelId: string }
+              | { serviceTeamId: string }
+              | { measurementId: string }
+              | { slack: { serviceTeamId: string; serviceUserId: string } }
+              | undefined;
 
 export enum UserPreference {
   /** Whether reopening the app should redirect to the last viewed document. */
@@ -187,6 +248,8 @@ export type SourceMetadata = {
   createdByName?: string;
   /** An ID in the external source. */
   externalId?: string;
+  /** Original name in the external source. */
+  externalName?: string;
   /** Whether the item was created through a trial license. */
   trial?: boolean;
 };
@@ -383,13 +446,18 @@ export type UnfurlResponse = {
     /** Issue title */
     title: string;
     /** Issue description */
-    description: string;
+    description: string | null;
     /** Issue's author */
     author: { name: string; avatarUrl: string };
     /** Issue's labels */
     labels: Array<{ name: string; color: string }>;
     /** Issue's status */
-    state: { name: string; color: string };
+    state: {
+      type?: string;
+      name: string;
+      color: string;
+      completionPercentage?: number;
+    };
     /** Issue's creation time */
     createdAt: string;
   };
@@ -403,11 +471,11 @@ export type UnfurlResponse = {
     /** Pull Request title */
     title: string;
     /** Pull Request description */
-    description: string;
+    description: string | null;
     /** Pull Request author */
     author: { name: string; avatarUrl: string };
     /** Pull Request status */
-    state: { name: string; color: string };
+    state: { name: string; color: string; draft?: boolean };
     /** Pull Request creation time */
     createdAt: string;
   };
@@ -415,6 +483,7 @@ export type UnfurlResponse = {
 
 export enum QueryNotices {
   UnsubscribeDocument = "unsubscribe-document",
+  UnsubscribeCollection = "unsubscribe-collection",
 }
 
 export type JSONValue =
@@ -430,7 +499,7 @@ export type JSONObject = { [x: string]: JSONValue };
 
 export type ProsemirrorData = {
   type: string;
-  content: ProsemirrorData[];
+  content?: ProsemirrorData[];
   text?: string;
   attrs?: JSONObject;
   marks?: {

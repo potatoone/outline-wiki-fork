@@ -1,7 +1,7 @@
 import { AnimatePresence } from "framer-motion";
 import { observer } from "mobx-react";
 import { ArrowIcon } from "outline-icons";
-import * as React from "react";
+import { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
@@ -12,7 +12,6 @@ import Empty from "~/components/Empty";
 import Fade from "~/components/Fade";
 import Flex from "~/components/Flex";
 import Scrollable from "~/components/Scrollable";
-import useBoolean from "~/hooks/useBoolean";
 import useCurrentUser from "~/hooks/useCurrentUser";
 import useFocusedComment from "~/hooks/useFocusedComment";
 import useKeyDown from "~/hooks/useKeyDown";
@@ -33,16 +32,14 @@ function Comments() {
   const { t } = useTranslation();
   const match = useRouteMatch<{ documentSlug: string }>();
   const params = useQuery();
-  // We need to control scroll behaviour when reaction picker is opened / closed.
-  const [scrollable, enableScroll, disableScroll] = useBoolean(true);
   const document = documents.getByUrl(match.params.documentSlug);
   const focusedComment = useFocusedComment();
   const can = usePolicy(document);
 
-  const scrollableRef = React.useRef<HTMLDivElement | null>(null);
-  const prevThreadCount = React.useRef(0);
-  const isAtBottom = React.useRef(true);
-  const [showJumpToRecentBtn, setShowJumpToRecentBtn] = React.useState(false);
+  const scrollableRef = useRef<HTMLDivElement | null>(null);
+  const prevThreadCount = useRef(0);
+  const isAtBottom = useRef(true);
+  const [showJumpToRecentBtn, setShowJumpToRecentBtn] = useState(false);
 
   useKeyDown("Escape", () => document && ui.set({ commentsExpanded: false }));
 
@@ -64,8 +61,8 @@ function Comments() {
   const threads = !document
     ? []
     : viewingResolved
-    ? comments.resolvedThreadsInDocument(document.id, sortOption)
-    : comments.unresolvedThreadsInDocument(document.id, sortOption);
+      ? comments.resolvedThreadsInDocument(document.id, sortOption)
+      : comments.unresolvedThreadsInDocument(document.id, sortOption);
   const hasComments = threads.length > 0;
 
   const scrollToBottom = () => {
@@ -91,7 +88,7 @@ function Comments() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Handles: 1. on refresh 2. when switching sort setting
     const readyToDisplay = Boolean(document && isEditorInitialized);
     if (
@@ -103,7 +100,7 @@ function Comments() {
     }
   }, [sortOption.type, document, isEditorInitialized, viewingResolved]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setShowJumpToRecentBtn(false);
     if (sortOption.type === CommentSortType.MostRecent && !viewingResolved) {
       const commentsAdded = threads.length > prevThreadCount.current;
@@ -138,8 +135,6 @@ function Comments() {
         bottomShadow={!focusedComment}
         hiddenScrollbars
         topShadow
-        overflow={scrollable ? "auto" : "hidden"}
-        style={{ overflowX: "hidden" }}
         ref={scrollableRef}
         onScroll={handleScroll}
       >
@@ -152,8 +147,6 @@ function Comments() {
                 document={document}
                 recessed={!!focusedComment && focusedComment.id !== thread.id}
                 focused={focusedComment?.id === thread.id}
-                enableScroll={enableScroll}
-                disableScroll={disableScroll}
               />
             ))
           ) : (

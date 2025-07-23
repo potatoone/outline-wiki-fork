@@ -1,3 +1,4 @@
+import { BrowserIcon } from "outline-icons";
 import * as React from "react";
 import styled from "styled-components";
 import { Primitive } from "utility-types";
@@ -189,8 +190,8 @@ const embeds: EmbedDescriptor[] = [
         const params = new URLSearchParams(url.search);
         params.append("embed", "");
         return `${url.origin}${url.pathname}?${params.toString()}`;
-      } catch (e) {
-        //
+      } catch (_err) {
+        // Ignore
       }
 
       return input;
@@ -424,8 +425,8 @@ const embeds: EmbedDescriptor[] = [
 
         params.append("embed", "true");
         return `${url.origin}${url.pathname}?${params.toString()}`;
-      } catch (e) {
-        //
+      } catch (_err) {
+        // Ignore
       }
 
       return input;
@@ -665,7 +666,7 @@ const embeds: EmbedDescriptor[] = [
     title: "Embed",
     keywords: "iframe webpage",
     placeholder: "Paste a URL to embed",
-    icon: <Img src="/images/embed.png" alt="Embed" />,
+    icon: <BrowserIcon />,
     defaultHidden: false,
     matchOnInput: false,
     regexMatch: [new RegExp("^https?://(.*)$")],

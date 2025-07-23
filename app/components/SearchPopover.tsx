@@ -53,10 +53,10 @@ function SearchPopover({ shareId, className }: Props) {
   }, [searchResults, query, show]);
 
   const performSearch = React.useCallback(
-    async ({ query, ...options }) => {
-      if (query?.length > 0) {
+    async ({ query: searchQuery, ...options }) => {
+      if (searchQuery?.length > 0) {
         const response = await documents.search({
-          query,
+          query: searchQuery,
           shareId,
           ...options,
         });
@@ -200,7 +200,7 @@ function SearchPopover({ shareId, className }: Props) {
         style={{ zIndex: depths.sidebar + 1 }}
         shrink
       >
-        <PaginatedList
+        <PaginatedList<SearchResult>
           options={{ query, snippetMinWords: 10, snippetMaxWords: 11 }}
           items={cachedSearchResults}
           fetch={performSearch}
@@ -209,7 +209,7 @@ function SearchPopover({ shareId, className }: Props) {
             <NoResults>{t("No results for {{query}}", { query })}</NoResults>
           }
           loading={<PlaceholderList count={3} header={{ height: 20 }} />}
-          renderItem={(item: SearchResult, index) => (
+          renderItem={(item, index) => (
             <SearchListItem
               key={item.document.id}
               shareId={shareId}

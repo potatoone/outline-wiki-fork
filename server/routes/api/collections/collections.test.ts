@@ -550,6 +550,34 @@ describe("#collections.export_all", () => {
 });
 
 describe("#collections.add_user", () => {
+  it("should add user to collection with manage permission", async () => {
+    const user = await buildUser();
+    const collection = await buildCollection({
+      teamId: user.teamId,
+      userId: user.id,
+      permission: null,
+    });
+    const anotherUser = await buildUser({
+      teamId: user.teamId,
+    });
+    await UserMembership.create({
+      createdById: user.id,
+      collectionId: collection.id,
+      userId: user.id,
+      permission: CollectionPermission.Admin,
+    });
+    const res = await server.post("/api/collections.add_user", {
+      body: {
+        token: user.getJwtToken(),
+        id: collection.id,
+        userId: anotherUser.id,
+      },
+    });
+    const users = await collection.$get("users");
+    expect(res.status).toEqual(200);
+    expect(users.length).toEqual(3);
+  });
+
   it("should add user to collection", async () => {
     const admin = await buildAdmin();
     const collection = await buildCollection({
@@ -1188,6 +1216,25 @@ describe("#collections.info", () => {
     expect(body.data.id).toEqual(collection.id);
   });
 
+  it("should work when passing urlId to id parameter", async () => {
+    const team = await buildTeam();
+    const user = await buildUser({ teamId: team.id });
+    const collection = await buildCollection({
+      userId: user.id,
+      teamId: team.id,
+    });
+    const res = await server.post("/api/collections.info", {
+      body: {
+        token: user.getJwtToken(),
+        id: `any-slug-${collection.urlId}`,
+      },
+    });
+    const body = await res.json();
+    expect(res.status).toEqual(200);
+    expect(body.data.id).toEqual(collection.id);
+    expect(body.data.urlId).toEqual(collection.urlId);
+  });
+
   it("should require user member of collection", async () => {
     const team = await buildTeam();
     const user = await buildUser({ teamId: team.id });
@@ -1325,6 +1372,32 @@ describe("#collections.create", () => {
     expect(body.data.permission).toEqual(null);
     expect(body.policies.length).toBe(1);
     expect(body.policies[0].abilities.read).toBeTruthy();
+  });
+
+  it("should ensure unique index across the team", async () => {
+    const team = await buildTeam();
+    const [adminA, adminB] = await Promise.all([
+      buildAdmin({ teamId: team.id }),
+      buildAdmin({ teamId: team.id }),
+    ]);
+
+    const resA = await server.post("/api/collections.create", {
+      body: {
+        token: adminA.getJwtToken(),
+        name: "Test A",
+      },
+    });
+    const resB = await server.post("/api/collections.create", {
+      body: {
+        token: adminB.getJwtToken(),
+        name: "Test B",
+      },
+    });
+    const [bodyA, bodyB] = await Promise.all([resA.json(), resB.json()]);
+
+    expect(resA.status).toEqual(200);
+    expect(resB.status).toEqual(200);
+    expect(bodyA.data.index).not.toEqual(bodyB.data.index);
   });
 
   it("if index collision, should updated index of other collection", async () => {
@@ -1890,5 +1963,35 @@ describe("#collections.restore", () => {
     expect(res.status).toEqual(200);
     expect(body.data.archivedAt).toBe(null);
     expect(collection.documentStructure).not.toBe(null);
+  });
+
+  it("should resolve index collision when restoring", async () => {
+    const admin = await buildAdmin();
+    let collection = await buildCollection({
+      teamId: admin.teamId,
+    });
+    let archivedCollection = await buildCollection({
+      teamId: admin.teamId,
+      archivedAt: new Date(),
+      archivedById: admin.id,
+    });
+    [collection, archivedCollection] = await Promise.all([
+      collection.update({ index: "P" }, { hooks: false }),
+      archivedCollection.update({ index: "P" }, { hooks: false }),
+    ]);
+    expect(collection.index).toEqual("P");
+    expect(archivedCollection.index).toEqual("P");
+
+    const res = await server.post("/api/collections.restore", {
+      body: {
+        token: admin.getJwtToken(),
+        id: archivedCollection.id,
+      },
+    });
+    const body = await res.json();
+
+    expect(res.status).toEqual(200);
+    expect(body.data.archivedAt).toBe(null);
+    expect(body.data.index).not.toBe("P");
   });
 });

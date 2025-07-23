@@ -231,6 +231,17 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
       case "userMemberships.update":
         // Ignored
         return;
+      case "imports.create":
+      case "imports.update":
+      case "imports.processed":
+      case "imports.delete":
+        // Ignored
+        return;
+      case "oauthClients.create":
+      case "oauthClients.update":
+      case "oauthClients.delete":
+        // Ignored
+        return;
       default:
         assertUnreachable(event);
     }
@@ -694,9 +705,6 @@ export default class DeliverWebhookTask extends BaseTask<Props> {
       });
       requestHeaders = {
         "Content-Type": "application/json",
-        "user-agent": `Outline-Webhooks${
-          env.VERSION ? `/${env.VERSION.slice(0, 7)}` : ""
-        }`,
       } as Record<string, string>;
 
       const signature = subscription.signature(JSON.stringify(requestBody));

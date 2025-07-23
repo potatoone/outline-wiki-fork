@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-types */
 import { Location, LocationDescriptor } from "history";
 import { TFunction } from "i18next";
 import {
@@ -66,7 +65,7 @@ export type MenuInternalLink = {
 export type MenuExternalLink = {
   type: "link";
   title: React.ReactNode;
-  href: string;
+  href: string | { url: string; target?: string };
   visible?: boolean;
   selected?: boolean;
   disabled?: boolean;
@@ -118,6 +117,7 @@ export type Action = {
    * instead. Errors will be caught and displayed to the user as a toast message.
    */
   perform?: (context: ActionContext) => any;
+  to?: string | { url: string; target?: string };
   children?: ((context: ActionContext) => Action[]) | Action[];
 };
 
@@ -177,10 +177,10 @@ export type WebsocketEntityDeletedEvent = {
 };
 
 export type WebsocketEntitiesEvent = {
-  fetchIfMissing?: boolean;
   documentIds: { id: string; updatedAt?: string }[];
   collectionIds: { id: string; updatedAt?: string }[];
   groupIds: { id: string; updatedAt?: string }[];
+  invalidatedPolicies: string[];
   teamIds: string[];
   event: string;
 };

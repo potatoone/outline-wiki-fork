@@ -54,7 +54,12 @@ router.post(
       });
       authorize(user, "read", document);
 
-      const collection = await document.$get("collection");
+      const collection = document.collectionId
+        ? await Collection.findByPk(document.collectionId, {
+            userId: user.id,
+            includeDocumentStructure: true,
+          })
+        : undefined;
       const parentIds = collection?.getDocumentParents(documentId);
       const parentShare = parentIds
         ? await Share.scope({
@@ -182,8 +187,14 @@ router.post(
   validate(T.SharesCreateSchema),
   transaction(),
   async (ctx: APIContext<T.SharesCreateReq>) => {
-    const { documentId, published, urlId, includeChildDocuments } =
-      ctx.input.body;
+    const {
+      documentId,
+      published,
+      urlId,
+      includeChildDocuments,
+      allowIndexing,
+      showLastUpdated,
+    } = ctx.input.body;
     const { user } = ctx.state.auth;
     authorize(user, "createShare", user.team);
 
@@ -209,6 +220,8 @@ router.post(
         userId: user.id,
         published,
         includeChildDocuments,
+        allowIndexing,
+        showLastUpdated,
         urlId,
       },
     });
@@ -230,8 +243,14 @@ router.post(
   validate(T.SharesUpdateSchema),
   transaction(),
   async (ctx: APIContext<T.SharesUpdateReq>) => {
-    const { id, includeChildDocuments, published, urlId, allowIndexing } =
-      ctx.input.body;
+    const {
+      id,
+      includeChildDocuments,
+      published,
+      urlId,
+      allowIndexing,
+      showLastUpdated,
+    } = ctx.input.body;
 
     const { user } = ctx.state.auth;
     authorize(user, "share", user.team);
@@ -260,6 +279,10 @@ router.post(
 
     if (allowIndexing !== undefined) {
       share.allowIndexing = allowIndexing;
+    }
+
+    if (showLastUpdated !== undefined) {
+      share.showLastUpdated = showLastUpdated;
     }
 
     await share.saveWithCtx(ctx);

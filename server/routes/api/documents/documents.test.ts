@@ -13,13 +13,14 @@ import {
   Document,
   View,
   Revision,
-  Backlink,
   UserMembership,
   SearchQuery,
   Event,
   User,
   GroupMembership,
+  Relationship,
 } from "@server/models";
+import { RelationshipType } from "@server/models/Relationship";
 import { DocumentHelper } from "@server/models/helpers/DocumentHelper";
 import {
   buildShare,
@@ -977,7 +978,7 @@ describe("#documents.list", () => {
     const res = await server.post("/api/documents.list", {
       body: {
         token: user.getJwtToken(),
-        collection: document.collectionId,
+        collectionId: document.collectionId,
       },
     });
     const body = await res.json();
@@ -1013,7 +1014,7 @@ describe("#documents.list", () => {
     const res = await server.post("/api/documents.list", {
       body: {
         token: user.getJwtToken(),
-        collection: collection.id,
+        collectionId: collection.id,
       },
     });
     const body = await res.json();
@@ -1033,8 +1034,9 @@ describe("#documents.list", () => {
       userId: user.id,
       teamId: user.teamId,
     });
-    await Backlink.create({
+    await Relationship.create({
       reverseDocumentId: anotherDoc.id,
+      type: RelationshipType.Backlink,
       documentId: document.id,
       userId: user.id,
     });

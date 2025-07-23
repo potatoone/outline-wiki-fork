@@ -13,7 +13,6 @@ import {
   ShapesIcon,
   DraftsIcon,
 } from "outline-icons";
-import * as React from "react";
 import { UrlHelper } from "@shared/utils/UrlHelper";
 import { isMac } from "@shared/utils/browser";
 import stores from "~/stores";
@@ -21,9 +20,7 @@ import SearchQuery from "~/models/SearchQuery";
 import KeyboardShortcuts from "~/scenes/KeyboardShortcuts";
 import { createAction } from "~/actions";
 import { NavigationSection, RecentSearchesSection } from "~/actions/sections";
-import env from "~/env";
 import Desktop from "~/utils/Desktop";
-import history from "~/utils/history";
 import isCloudHosted from "~/utils/isCloudHosted";
 import {
   homePath,
@@ -40,7 +37,7 @@ export const navigateToHome = createAction({
   section: NavigationSection,
   shortcut: ["d"],
   icon: <HomeIcon />,
-  perform: () => history.push(homePath()),
+  to: homePath(),
   visible: ({ location }) => location.pathname !== homePath(),
 });
 
@@ -50,7 +47,7 @@ export const navigateToRecentSearchQuery = (searchQuery: SearchQuery) =>
     name: searchQuery.query,
     analyticsName: "Navigate to recent search query",
     icon: <SearchIcon />,
-    perform: () => history.push(searchPath({ query: searchQuery.query })),
+    to: searchPath({ query: searchQuery.query }),
   });
 
 export const navigateToDrafts = createAction({
@@ -58,7 +55,7 @@ export const navigateToDrafts = createAction({
   analyticsName: "Navigate to drafts",
   section: NavigationSection,
   icon: <DraftsIcon />,
-  perform: () => history.push(draftsPath()),
+  to: draftsPath(),
   visible: ({ location }) => location.pathname !== draftsPath(),
 });
 
@@ -67,7 +64,7 @@ export const navigateToSearch = createAction({
   analyticsName: "Navigate to search",
   section: NavigationSection,
   icon: <SearchIcon />,
-  perform: () => history.push(searchPath()),
+  to: searchPath(),
   visible: ({ location }) => location.pathname !== searchPath(),
 });
 
@@ -77,7 +74,7 @@ export const navigateToArchive = createAction({
   section: NavigationSection,
   shortcut: ["g", "a"],
   icon: <ArchiveIcon />,
-  perform: () => history.push(archivePath()),
+  to: archivePath(),
   visible: ({ location }) => location.pathname !== archivePath(),
 });
 
@@ -86,7 +83,7 @@ export const navigateToTrash = createAction({
   analyticsName: "Navigate to trash",
   section: NavigationSection,
   icon: <TrashIcon />,
-  perform: () => history.push(trashPath()),
+  to: trashPath(),
   visible: ({ location }) => location.pathname !== trashPath(),
 });
 
@@ -97,7 +94,7 @@ export const navigateToSettings = createAction({
   shortcut: ["g", "s"],
   icon: <SettingsIcon />,
   visible: () => stores.policies.abilities(stores.auth.team?.id || "").update,
-  perform: () => history.push(settingsPath()),
+  to: settingsPath(),
 });
 
 export const navigateToWorkspaceSettings = createAction({
@@ -106,7 +103,7 @@ export const navigateToWorkspaceSettings = createAction({
   section: NavigationSection,
   icon: <SettingsIcon />,
   visible: () => stores.policies.abilities(stores.auth.team?.id || "").update,
-  perform: () => history.push(settingsPath("details")),
+  to: settingsPath("details"),
 });
 
 export const navigateToProfileSettings = createAction({
@@ -115,7 +112,7 @@ export const navigateToProfileSettings = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <ProfileIcon />,
-  perform: () => history.push(settingsPath()),
+  to: settingsPath(),
 });
 
 export const navigateToTemplateSettings = createAction({
@@ -124,7 +121,7 @@ export const navigateToTemplateSettings = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <ShapesIcon />,
-  perform: () => history.push(settingsPath("templates")),
+  to: settingsPath("templates"),
 });
 
 export const navigateToNotificationSettings = createAction({
@@ -133,7 +130,7 @@ export const navigateToNotificationSettings = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <EmailIcon />,
-  perform: () => history.push(settingsPath("notifications")),
+  to: settingsPath("notifications"),
 });
 
 export const navigateToAccountPreferences = createAction({
@@ -142,7 +139,7 @@ export const navigateToAccountPreferences = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <SettingsIcon />,
-  perform: () => history.push(settingsPath("preferences")),
+  to: settingsPath("preferences"),
 });
 
 export const openDocumentation = createAction({
@@ -151,7 +148,10 @@ export const openDocumentation = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <OpenIcon />,
-  perform: () => window.open(UrlHelper.guide),
+  to: {
+    url: UrlHelper.guide,
+    target: "_blank",
+  },
 });
 
 export const openAPIDocumentation = createAction({
@@ -160,7 +160,10 @@ export const openAPIDocumentation = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <OpenIcon />,
-  perform: () => window.open(UrlHelper.developers),
+  to: {
+    url: UrlHelper.developers,
+    target: "_blank",
+  },
 });
 
 export const toggleSidebar = createAction({
@@ -177,14 +180,20 @@ export const openFeedbackUrl = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <EmailIcon />,
-  perform: () => window.open(UrlHelper.contact),
+  to: {
+    url: UrlHelper.contact,
+    target: "_blank",
+  },
 });
 
 export const openBugReportUrl = createAction({
   name: ({ t }) => t("Report a bug"),
   analyticsName: "Open bug report",
   section: NavigationSection,
-  perform: () => window.open(UrlHelper.github),
+  to: {
+    url: UrlHelper.github,
+    target: "_blank",
+  },
 });
 
 export const openChangelog = createAction({
@@ -193,7 +202,10 @@ export const openChangelog = createAction({
   section: NavigationSection,
   iconInContextMenu: false,
   icon: <OpenIcon />,
-  perform: () => window.open(UrlHelper.changelog),
+  to: {
+    url: UrlHelper.changelog,
+    target: "_blank",
+  },
 });
 
 export const openKeyboardShortcuts = createAction({
@@ -221,8 +233,9 @@ export const downloadApp = createAction({
   iconInContextMenu: false,
   icon: <BrowserIcon />,
   visible: () => !Desktop.isElectron() && isMac() && isCloudHosted,
-  perform: () => {
-    window.open("https://desktop.getoutline.com");
+  to: {
+    url: "https://desktop.getoutline.com",
+    target: "_blank",
   },
 });
 
@@ -232,12 +245,7 @@ export const logout = createAction({
   section: NavigationSection,
   icon: <LogoutIcon />,
   perform: async () => {
-    await stores.auth.logout();
-    if (env.OIDC_LOGOUT_URI) {
-      setTimeout(() => {
-        window.location.replace(env.OIDC_LOGOUT_URI);
-      }, 200);
-    }
+    await stores.auth.logout({ userInitiated: true });
   },
 });
 

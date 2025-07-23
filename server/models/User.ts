@@ -46,9 +46,11 @@ import {
 import { UserRoleHelper } from "@shared/utils/UserRoleHelper";
 import { stringToColor } from "@shared/utils/color";
 import { locales } from "@shared/utils/date";
+import { UserValidation } from "@shared/validations";
 import env from "@server/env";
 import DeleteAttachmentTask from "@server/queues/tasks/DeleteAttachmentTask";
 import { APIContext } from "@server/types";
+import { VerificationCode } from "@server/utils/VerificationCode";
 import parseAttachmentIds from "@server/utils/parseAttachmentIds";
 import { ValidationError } from "../errors";
 import Attachment from "./Attachment";
@@ -128,12 +130,20 @@ class User extends ParanoidModel<
   Partial<InferCreationAttributes<User>>
 > {
   @IsEmail
-  @Length({ max: 255, msg: "User email must be 255 characters or less" })
+  @Length({
+    min: 1,
+    max: UserValidation.maxEmailLength,
+    msg: `User email must be between 1 and ${UserValidation.maxEmailLength} characters`,
+  })
   @Column
   email: string | null;
 
   @NotContainsUrl
-  @Length({ max: 255, msg: "User name must be 255 characters or less" })
+  @Length({
+    min: 1,
+    max: UserValidation.maxNameLength,
+    msg: `User name must be between 1 and ${UserValidation.maxNameLength} characters`,
+  })
   @Column
   name: string;
 
@@ -583,6 +593,22 @@ class User extends ParanoidModel<
     );
 
   /**
+   * Generate a 6-digit verification code for email authentication
+   * and store it in Redis with a 10-minute TTL.
+   *
+   * @returns The 6-digit verification code
+   */
+  getEmailVerificationCode = async (): Promise<string> => {
+    if (!this.email) {
+      throw ValidationError("Email is required");
+    }
+
+    const code = VerificationCode.generate();
+    await VerificationCode.store(this.email, code);
+    return code;
+  };
+
+  /**
    * Returns a temporary token that can be used to update the users
    * email address.
    *
@@ -717,7 +743,7 @@ class User extends ParanoidModel<
       });
 
       if (attachment) {
-        await DeleteAttachmentTask.schedule({
+        await new DeleteAttachmentTask().schedule({
           attachmentId: attachment.id,
           teamId: model.teamId,
         });

@@ -39,6 +39,7 @@ export interface Props extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   location?: Location;
   strict?: boolean;
   to: LocationDescriptor;
+  component?: React.ComponentType;
   onBeforeClick?: () => void;
 }
 
@@ -74,7 +75,7 @@ const NavLink = ({
   );
   const { pathname: path } = toLocation;
 
-  const match = path
+  const pathMatch = path
     ? matchPath(currentLocation.pathname, {
         // Regex taken from: https://github.com/pillarjs/path-to-regexp/blob/master/index.js#L202
         path: path.replace(/([.+*?=^!:${}()[\]|/\\])/g, "\\$1"),
@@ -85,7 +86,7 @@ const NavLink = ({
 
   const isActive =
     preActive ??
-    !!(isActiveProp ? isActiveProp(match, currentLocation) : match);
+    !!(isActiveProp ? isActiveProp(pathMatch, currentLocation) : pathMatch);
   const className = isActive
     ? joinClassnames(classNameProp, activeClassName)
     : classNameProp;
@@ -146,17 +147,22 @@ const NavLink = ({
     setPreActive(undefined);
   }, [currentLocation]);
 
+  const handleKeyDown = React.useCallback(
+    (event: React.KeyboardEvent<HTMLAnchorElement>) => {
+      if (["Enter", " "].includes(event.key)) {
+        navigateTo();
+        event.currentTarget?.blur();
+      }
+    },
+    [navigateTo]
+  );
+
   return (
     <Link
       key={isActive ? "active" : "inactive"}
       ref={linkRef}
       onClick={handleClick}
-      onKeyDown={(event) => {
-        if (["Enter", " "].includes(event.key)) {
-          navigateTo();
-          event.currentTarget?.blur();
-        }
-      }}
+      onKeyDown={handleKeyDown}
       aria-current={(isActive && ariaCurrent) || undefined}
       className={className}
       style={style}

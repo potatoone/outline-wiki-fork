@@ -221,19 +221,17 @@ export default class Image extends SimpleImage {
   handleChangeSize =
     ({ node, getPos }: { node: ProsemirrorNode; getPos: () => number }) =>
     ({ width, height }: { width: number; height?: number }) => {
-      const { view } = this.editor;
-      const { tr } = view.state;
+      const { view, commands } = this.editor;
+      const { doc, tr } = view.state;
 
       const pos = getPos();
-      const transaction = tr
-        .setNodeMarkup(pos, undefined, {
-          ...node.attrs,
-          width,
-          height,
-        })
-        .setMeta("addToHistory", true);
-      const $pos = transaction.doc.resolve(getPos());
-      view.dispatch(transaction.setSelection(new NodeSelection($pos)));
+      const $pos = doc.resolve(pos);
+
+      view.dispatch(tr.setSelection(new NodeSelection($pos)));
+      commands["resizeImage"]({
+        width,
+        height: height || node.attrs.height,
+      });
     };
 
   handleDownload =
@@ -353,9 +351,7 @@ export default class Image extends SimpleImage {
       node: "image",
       getAttrs: (token: Token) => ({
         src: token.attrGet("src"),
-        alt:
-          (token?.children && token.children[0] && token.children[0].content) ||
-          null,
+        alt: token.content || null,
         ...parseTitleAttribute(token?.attrGet("title") || ""),
       }),
     };
@@ -408,10 +404,14 @@ export default class Image extends SimpleImage {
         if (!(state.selection instanceof NodeSelection)) {
           return false;
         }
+        let layoutClass: string | null = "full-width";
+        if (state.selection.node.attrs.layoutClass === layoutClass) {
+          layoutClass = null;
+        }
         const attrs = {
           ...state.selection.node.attrs,
           title: null,
-          layoutClass: "full-width",
+          layoutClass,
         };
         const { selection } = state;
         dispatch?.(state.tr.setNodeMarkup(selection.from, undefined, attrs));
@@ -426,6 +426,28 @@ export default class Image extends SimpleImage {
         dispatch?.(state.tr.setNodeMarkup(selection.from, undefined, attrs));
         return true;
       },
+      resizeImage:
+        ({ width, height }: { width: number; height: number }): Command =>
+        (state, dispatch) => {
+          if (!(state.selection instanceof NodeSelection)) {
+            return false;
+          }
+
+          const { selection } = state;
+          const transformedAttrs = {
+            ...state.selection.node.attrs,
+            width,
+            height,
+          };
+
+          const tr = state.tr
+            .setNodeMarkup(selection.from, undefined, transformedAttrs)
+            .setMeta("addToHistory", true);
+
+          const $pos = tr.doc.resolve(selection.from);
+          dispatch?.(tr.setSelection(new NodeSelection($pos)));
+          return true;
+        },
     };
   }
 
