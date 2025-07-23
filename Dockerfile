@@ -1,13 +1,14 @@
 ARG APP_PATH=/opt/outline
-FROM outlinewiki/outline_base:0.78.0 AS base
+ARG BASE_IMAGE=outlinewiki/outline-base
+FROM ${BASE_IMAGE} AS base
 
 ARG APP_PATH
 WORKDIR $APP_PATH
 
 # ---
-FROM node:20-slim AS runner
+FROM node:22-slim AS runner
 
-LABEL org.opencontainers.image.source="https://github.com/potatoone/outline-wiki-fork"
+LABEL org.opencontainers.image.source="https://github.com/outline/outline"
 
 ARG APP_PATH
 WORKDIR $APP_PATH
@@ -30,7 +31,7 @@ RUN addgroup --gid 1001 nodejs && \
   adduser --uid 1001 --ingroup nodejs nodejs && \
   chown -R nodejs:nodejs $APP_PATH/build && \
   mkdir -p /var/lib/outline && \
-	chown -R nodejs:nodejs /var/lib/outline
+  chown -R nodejs:nodejs /var/lib/outline
 
 ENV FILE_STORAGE_LOCAL_ROOT_DIR=/var/lib/outline/data
 RUN mkdir -p "$FILE_STORAGE_LOCAL_ROOT_DIR" && \
@@ -45,3 +46,4 @@ HEALTHCHECK --interval=1m CMD wget -qO- "http://localhost:${PORT:-3000}/_health"
 
 EXPOSE 3000
 CMD ["yarn", "start"]
+
