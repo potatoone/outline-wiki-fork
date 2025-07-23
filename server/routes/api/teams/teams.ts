@@ -1,7 +1,6 @@
 import Router from "koa-router";
 import { UserRole } from "@shared/types";
 import teamCreator from "@server/commands/teamCreator";
-import teamDestroyer from "@server/commands/teamDestroyer";
 import teamUpdater from "@server/commands/teamUpdater";
 import ConfirmTeamDeleteEmail from "@server/emails/templates/ConfirmTeamDeleteEmail";
 import env from "@server/env";
@@ -31,11 +30,10 @@ const handleTeamUpdate = async (ctx: APIContext<T.TeamsUpdateSchemaReq>) => {
   authorize(user, "update", team);
 
   const updatedTeam = await teamUpdater({
+    ctx,
     params: ctx.input.body,
     user,
     team,
-    ip: ctx.request.ip,
-    transaction,
   });
 
   ctx.body = {
@@ -93,7 +91,7 @@ router.post(
   validate(T.TeamsDeleteSchema),
   transaction(),
   async (ctx: APIContext<T.TeamsDeleteSchemaReq>) => {
-    const { auth, transaction } = ctx.state;
+    const { auth } = ctx.state;
     const { code } = ctx.input.body;
     const { user } = auth;
     const { team } = user;
@@ -108,12 +106,7 @@ router.post(
       }
     }
 
-    await teamDestroyer({
-      team,
-      user,
-      transaction,
-      ip: ctx.request.ip,
-    });
+    await team.destroyWithCtx(ctx);
 
     ctx.body = {
       success: true,
@@ -148,11 +141,10 @@ router.post(
     );
 
     const team = await teamCreator({
+      ctx,
       name,
       subdomain: name,
       authenticationProviders,
-      ip: ctx.ip,
-      transaction,
     });
 
     const newUser = await User.create(

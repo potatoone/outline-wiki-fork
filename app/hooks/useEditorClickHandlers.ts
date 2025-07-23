@@ -41,10 +41,14 @@ export default function useEditorClickHandlers({ shareId }: Params) {
           return;
         }
 
+        // parse shareId from link
+        const linkShareId = navigateTo.match(/\/s\/([^/]+)\/doc\//)?.[1];
+
         // If we're navigating to an internal document link then prepend the
         // share route to the URL so that the document is loaded in context
         if (
           shareId &&
+          (!linkShareId || linkShareId === shareId) &&
           navigateTo.includes("/doc/") &&
           !navigateTo.includes(shareId)
         ) {
@@ -64,7 +68,10 @@ export default function useEditorClickHandlers({ shareId }: Params) {
           return;
         }
 
-        if (!event || (!isModKey(event) && !event.shiftKey)) {
+        if (
+          !event ||
+          (!isModKey(event) && !event.shiftKey && event.button !== 1)
+        ) {
           history.push(navigateTo, { sidebarContext: "collections" }); // optimistic preference of "collections"
         } else {
           window.open(navigateTo, "_blank");
