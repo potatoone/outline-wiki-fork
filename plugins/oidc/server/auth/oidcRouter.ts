@@ -125,12 +125,12 @@ export function createOIDCRouter(
           // Only a single OIDC provider is supported – find the existing, if any.
           const authenticationProvider = team
             ? ((await AuthenticationProvider.findOne({
-                where: {
-                  name: "oidc",
-                  teamId: team.id,
-                  providerId: domain,
-                },
-              })) ??
+              where: {
+                name: "oidc",
+                teamId: team.id,
+                providerId: domain,
+              },
+            })) ??
               (await AuthenticationProvider.findOne({
                 where: {
                   name: "oidc",
@@ -180,6 +180,16 @@ export function createOIDCRouter(
             avatarUrl = null;
           }
 
+          let groups: undefined | string[];
+          if (env.OIDC_GROUPS_CLAIM && profile[env.OIDC_GROUPS_CLAIM]) {
+            if (!Array.isArray(profile[env.OIDC_GROUPS_CLAIM])) {
+              throw AuthenticationError(
+                "The groups claim in the profile parameter that was returned must be an array."
+              );
+            }
+            groups = profile[env.OIDC_GROUPS_CLAIM] as unknown as string[];
+          }
+
           const result = await accountProvisioner({
             ip: ctx.ip,
             team: {
@@ -197,6 +207,7 @@ export function createOIDCRouter(
               name: config.id,
               providerId,
             },
+            groups,
             authentication: {
               providerId: profileId,
               accessToken,
